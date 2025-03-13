@@ -1,35 +1,48 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box, Container } from '@mui/material';
-import ChatIcon from '@mui/icons-material/Chat';
-import BuildIcon from '@mui/icons-material/Build';
-import App from './App';
-import Tools from './Tools';
+import { useState, useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  useLocation,
+} from "react-router-dom";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  Container,
+} from "@mui/material";
+import ChatIcon from "@mui/icons-material/Chat";
+import BuildIcon from "@mui/icons-material/Build";
+import App from "./App";
+import Tools from "./Tools";
 
 // Helper component to handle route changes
 function RouteObserver({ setActivePage }) {
   const location = useLocation();
-  
+
   useEffect(() => {
     // Set active page based on current path
     const path = location.pathname;
-    if (path === '/') {
-      setActivePage('chat');
-    } else if (path === '/tools') {
-      setActivePage('tools');
+    if (path === "/") {
+      setActivePage("chat");
+    } else if (path === "/tools") {
+      setActivePage("tools");
     }
   }, [location, setActivePage]);
-  
+
   // Run once on component mount to set the initial active page
   useEffect(() => {
     const path = location.pathname;
-    if (path === '/') {
-      setActivePage('chat');
-    } else if (path === '/tools') {
-      setActivePage('tools');
+    if (path === "/") {
+      setActivePage("chat");
+    } else if (path === "/tools") {
+      setActivePage("tools");
     }
   }, [setActivePage]);
-  
+
   return null;
 }
 
@@ -38,7 +51,7 @@ function AppWrapper() {
   const [activePage, setActivePage] = useState(() => {
     // Get the initial path from window.location
     const path = window.location.pathname;
-    return path === '/tools' ? 'tools' : 'chat';
+    return path === "/tools" ? "tools" : "chat";
   });
 
   return (
@@ -50,28 +63,34 @@ function AppWrapper() {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               Claude Client
             </Typography>
-            <Button 
-              color="inherit" 
-              component={Link} 
+            <Button
+              color="inherit"
+              component={Link}
               to="/"
               startIcon={<ChatIcon />}
-              sx={{ 
+              sx={{
                 mr: 2,
-                backgroundColor: activePage === 'chat' ? 'rgba(255, 255, 255, 0.15)' : 'transparent'
+                backgroundColor:
+                  activePage === "chat"
+                    ? "rgba(255, 255, 255, 0.15)"
+                    : "transparent",
               }}
-              onClick={() => setActivePage('chat')}
+              onClick={() => setActivePage("chat")}
             >
               Chat
             </Button>
-            <Button 
-              color="inherit" 
-              component={Link} 
+            <Button
+              color="inherit"
+              component={Link}
               to="/tools"
               startIcon={<BuildIcon />}
-              sx={{ 
-                backgroundColor: activePage === 'tools' ? 'rgba(255, 255, 255, 0.15)' : 'transparent'
+              sx={{
+                backgroundColor:
+                  activePage === "tools"
+                    ? "rgba(255, 255, 255, 0.15)"
+                    : "transparent",
               }}
-              onClick={() => setActivePage('tools')}
+              onClick={() => setActivePage("tools")}
             >
               Tools
             </Button>
