@@ -7,6 +7,7 @@ wheels/
 *.egg-info
 .vs_code/
 node_modules/
+.DS_Store
 
 # Virtual environments
 .venv

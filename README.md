@@ -1,26 +1,22 @@
-uv run client.py http://localhost:8080/sse --api
+## Frontend
 
-Once running, you can::
-
-# Send a message
+## Build for OSx
 
 ```
-curl -X POST http://localhost:8000/query -H "Content-Type: application/json" -d \
-'{"text":"Find the top authors on oreilly who write about ai. List their names and the titles of their top books along with links."}'
+pyinstaller --noconfirm --clean mcp-explorer.spec
 ```
 
-# Get message history
+### To package, sign, and notarize
+
+I used this this tool, whih does all the steps in a nice package:
+
+https://github.com/txoof/codesign
+
+Note that I renamed it `pycodesign` when I downloaded it, even though it's called `pycodesign.py` when you download it from the repo.
 
 ```
-curl http://localhost:8000/messages
+cd dist
+pycodesign ../pycodesign.ini
 ```
 
-# Call a tool:
-
-```bash
-curl -X POST http://0.0.0.0:8000/call-tool \
-   -H "Content-Type: application/json" \
-   -d '{
-      "tool_name": "search_content",
-      "tool_args": { "query": "python" }}'
-```
+NB: Before you can notarize, you need to have a developer account with Apple and have set up the notarization process. This is a bit of a pain, but it's not too bad. You can find the instructions [here](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution).

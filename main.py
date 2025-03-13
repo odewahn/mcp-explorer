@@ -11,6 +11,8 @@ from mcp.client.sse import sse_client
 
 from anthropic import Anthropic
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
@@ -337,13 +339,11 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-"""
 app.mount(
     "/static",
     StaticFiles(directory=os.path.join(script_path, "static"), html=True),
     name="static",
 )
-"""
 
 client = MCPClient()
 
@@ -577,7 +577,7 @@ async def reset_messages():
 
 def main():
 
-    webbrowser.open("http://localhost:5173")
+    webbrowser.open("http://localhost:8000/static")
     # Run the FastAPI app directly (this will create its own event loop)
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
