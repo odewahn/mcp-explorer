@@ -26,7 +26,7 @@ function RouteObserver({ setActivePage }) {
   useEffect(() => {
     // Set active page based on current path
     const path = location.pathname;
-    if (path === "/") {
+    if (path === "/" || path === "/static/") {
       setActivePage("chat");
     } else if (path === "/tools") {
       setActivePage("tools");
@@ -51,7 +51,15 @@ function AppWrapper() {
   const [activePage, setActivePage] = useState(() => {
     // Get the initial path from window.location
     const path = window.location.pathname;
-    return path === "/tools" ? "tools" : "chat";
+    // Handle both /static/ and /tools paths
+    if (path === '/tools') {
+      return 'tools';
+    } else if (path === '/static/' || path === '/') {
+      return 'chat';
+    } else {
+      // Default to chat for any other path
+      return 'chat';
+    }
   });
 
   return (
