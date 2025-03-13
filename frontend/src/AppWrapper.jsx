@@ -99,6 +99,7 @@ function AppWrapper() {
         <Container sx={{ mt: 2, pb: 2 }}>
           <Routes>
             <Route path="/" element={<App />} />
+            <Route path="/static/" element={<App />} />
             <Route path="/tools" element={<Tools />} />
           </Routes>
         </Container>
