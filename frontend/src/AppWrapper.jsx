@@ -20,11 +20,26 @@ function RouteObserver({ setActivePage }) {
     }
   }, [location, setActivePage]);
   
+  // Run once on component mount to set the initial active page
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/') {
+      setActivePage('chat');
+    } else if (path === '/tools') {
+      setActivePage('tools');
+    }
+  }, [setActivePage]);
+  
   return null;
 }
 
 function AppWrapper() {
-  const [activePage, setActivePage] = useState('chat');
+  // Initialize activePage based on the current URL path
+  const [activePage, setActivePage] = useState(() => {
+    // Get the initial path from window.location
+    const path = window.location.pathname;
+    return path === '/tools' ? 'tools' : 'chat';
+  });
 
   return (
     <BrowserRouter>
