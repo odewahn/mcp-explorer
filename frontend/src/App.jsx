@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Tabs, Tab, Box } from "@mui/material";
+import { Tabs, Tab, Box, CircularProgress } from "@mui/material";
 import InputMessage from "./InputMessage";
 import JSONView from "./JSONView";
 import MessageView from "./MessageView";
@@ -38,23 +38,34 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [systemPrompt, setSystemPrompt] = useState("");
   const [tabValue, setTabValue] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
+  // Load messages when component mounts
   useEffect(() => {
-    loadMessages();
-  }, []);
+    // Set a flag to ensure we only initialize once
+    if (!initialized) {
+      loadMessages();
+      setInitialized(true);
+    }
+  }, [initialized]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-  // It sends the message to the server.
+  // Load messages from the server
   const loadMessages = async () => {
-    // Send the message to the server
-    const response = await fetch("http://0.0.0.0:8000/messages")
-      .then((response) => response.json())
-      .then((data) => {
-        setMessages(data);
-      });
+    setLoading(true);
+    try {
+      const response = await fetch("http://0.0.0.0:8000/messages");
+      const data = await response.json();
+      setMessages(data);
+    } catch (error) {
+      console.error("Error loading messages:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle system prompt changes
@@ -73,8 +84,16 @@ function App() {
         </Tabs>
       </Box>
       
-      {tabValue === 0 && <MessageView data={messages} />}
-      {tabValue === 1 && <JSONView data={messages} />}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 10 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          {tabValue === 0 && <MessageView data={messages} />}
+          {tabValue === 1 && <JSONView data={messages} />}
+        </>
+      )}
       
       <InputMessage onNewMessage={loadMessages} systemPrompt={systemPrompt} />
     </div>

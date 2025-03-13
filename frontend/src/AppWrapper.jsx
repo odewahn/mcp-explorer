@@ -1,16 +1,34 @@
-import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, Box, Container } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
 import BuildIcon from '@mui/icons-material/Build';
 import App from './App';
 import Tools from './Tools';
 
+// Helper component to handle route changes
+function RouteObserver({ setActivePage }) {
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Set active page based on current path
+    const path = location.pathname;
+    if (path === '/') {
+      setActivePage('chat');
+    } else if (path === '/tools') {
+      setActivePage('tools');
+    }
+  }, [location, setActivePage]);
+  
+  return null;
+}
+
 function AppWrapper() {
   const [activePage, setActivePage] = useState('chat');
 
   return (
     <BrowserRouter>
+      <RouteObserver setActivePage={setActivePage} />
       <Box sx={{ flexGrow: 1 }}>
         <AppBar position="static">
           <Toolbar>
