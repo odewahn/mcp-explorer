@@ -1,0 +1,14 @@
+[project]
+name = "oreilly-llm-connect-client"
+version = "0.1.0"
+description = "LLM Client"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic",
+    "httpx",
+    "mcp[cli]",
+    "fastapi",
+    "uvicorn",
+    "pyinstaller",
+]

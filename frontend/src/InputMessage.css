@@ -1,0 +1,34 @@
+.input-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.model-select-container {
+  width: 200px;
+  min-width: 200px;
+}
+
+.text-field-container {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.button-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reset-button-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Make sure the TextField grows smoothly */
+.MuiInputBase-multiline {
+  transition: height 0.2s ease-in-out !important;
+}
