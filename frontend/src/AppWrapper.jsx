@@ -36,7 +36,7 @@ function RouteObserver({ setActivePage }) {
   // Run once on component mount to set the initial active page
   useEffect(() => {
     const path = location.pathname;
-    if (path === "/") {
+    if (path === "/" || path === "/static/") {
       setActivePage("chat");
     } else if (path === "/tools") {
       setActivePage("tools");
