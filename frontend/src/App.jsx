@@ -45,7 +45,7 @@ function App() {
   };
 
   return (
-    <div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <SystemPrompt onSystemPromptChange={handleSystemPromptChange} />
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}>
@@ -71,7 +71,7 @@ function App() {
       )}
 
       <InputMessage onNewMessage={loadMessages} systemPrompt={systemPrompt} />
-    </div>
+    </Box>
   );
 }
 

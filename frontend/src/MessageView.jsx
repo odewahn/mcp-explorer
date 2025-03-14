@@ -98,7 +98,7 @@ function MessageView({ data }) {
     <Box
       ref={containerRef}
       sx={{
-        height: "55vh",
+        flexGrow: 1,
         overflowY: "auto",
         padding: "10px",
         border: "1px solid #ddd",

@@ -203,7 +203,7 @@ function Tools() {
   };
 
   return (
-    <Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="tool tabs">
           <Tab label="Tool Servers" />
@@ -212,7 +212,7 @@ function Tools() {
       </Box>
 
       {tabValue === 0 ? (
-        <Box>
+        <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
           <Typography variant="h4" gutterBottom>
             Tool Servers
           </Typography>
@@ -330,6 +330,8 @@ function Tools() {
                         </Typography>
                         <pre style={{ 
                           overflowX: 'auto', 
+                          overflowY: 'auto',
+                          maxHeight: '300px',
                           whiteSpace: 'pre-wrap',
                           wordBreak: 'break-word',
                           fontSize: '0.875rem'

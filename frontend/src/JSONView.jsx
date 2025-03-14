@@ -33,7 +33,8 @@ function JSONView({ data }) {
     <div
       ref={containerRef}
       style={{
-        height: "55vh",
+        flexGrow: 1,
+        height: "100%",
         overflowY: "auto",
         padding: "10px",
         border: "1px solid #ddd",

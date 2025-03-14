@@ -65,7 +65,7 @@ function AppWrapper() {
   return (
     <BrowserRouter>
       <RouteObserver setActivePage={setActivePage} />
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <AppBar position="static">
           <Toolbar>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -104,7 +104,7 @@ function AppWrapper() {
             </Button>
           </Toolbar>
         </AppBar>
-        <Container sx={{ mt: 2, pb: 2 }}>
+        <Container sx={{ mt: 2, pb: 2, flexGrow: 1, overflow: 'auto' }}>
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/static/" element={<App />} />
