@@ -194,8 +194,9 @@ function InputMessage({ onNewMessage, systemPrompt }) {
           textTransform: 'none',
           borderRadius: '4px',
           boxShadow: 'none',
-          padding: '8px 16px',
-          height: '40px',
+          padding: '10px 20px',
+          height: '42px',
+          minWidth: '100px',
           '&:hover': {
             boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
           }
