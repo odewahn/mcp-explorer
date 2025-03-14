@@ -195,7 +195,12 @@ function ToolTester() {
               color="primary"
               onClick={executeToolCall}
               disabled={executing}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                padding: '8px 16px',
+                textTransform: 'none',
+                fontWeight: 500
+              }}
             >
               {executing ? <CircularProgress size={24} /> : 'Execute Tool'}
             </Button>

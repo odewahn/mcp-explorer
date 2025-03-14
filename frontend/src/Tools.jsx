@@ -257,6 +257,11 @@ function Tools() {
           startIcon={<AddIcon />} 
           onClick={() => setOpenDialog(true)}
           disabled={loading}
+          sx={{
+            padding: '8px 16px',
+            textTransform: 'none',
+            fontWeight: 500
+          }}
         >
           Add Server
         </Button>
@@ -338,6 +343,11 @@ function Tools() {
                               // Store the tool name in sessionStorage to be used by ToolTester
                               sessionStorage.setItem('selectedTool', tool.name);
                             }}
+                            sx={{
+                              padding: '4px 12px',
+                              textTransform: 'none',
+                              fontWeight: 500
+                            }}
                           >
                             Test
                           </Button>
@@ -414,11 +424,24 @@ function Tools() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={() => setOpenDialog(false)}
+            sx={{
+              padding: '6px 16px',
+              textTransform: 'none'
+            }}
+          >
+            Cancel
+          </Button>
           <Button 
             onClick={handleAddServer} 
             variant="contained"
             disabled={loading || !newServer.url}
+            sx={{
+              padding: '6px 16px',
+              textTransform: 'none',
+              fontWeight: 500
+            }}
           >
             {loading ? <CircularProgress size={24} /> : 'Add Server'}
           </Button>

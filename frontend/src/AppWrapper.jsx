@@ -86,6 +86,7 @@ function AppWrapper() {
                   borderRadius: '4px',
                   textTransform: 'none',
                   fontWeight: 500,
+                  padding: '8px 16px',
                   '&:hover': {
                     backgroundColor: 'rgba(255, 255, 255, 0.25)',
                   }
@@ -108,6 +109,7 @@ function AppWrapper() {
                   borderRadius: '4px',
                   textTransform: 'none',
                   fontWeight: 500,
+                  padding: '8px 16px',
                   '&:hover': {
                     backgroundColor: 'rgba(255, 255, 255, 0.25)',
                   }
