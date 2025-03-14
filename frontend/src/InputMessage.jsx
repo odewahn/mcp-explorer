@@ -120,67 +120,101 @@ function InputMessage({ onNewMessage, systemPrompt }) {
   };
 
   return (
-    <div className="input-container">
-      <div className="model-select-container" style={{ alignSelf: 'flex-start' }}>
-        <FormControl variant="outlined" size="small" fullWidth>
-          <InputLabel id="model-select-label">Model</InputLabel>
-          <Select
-            labelId="model-select-label"
-            id="model-select"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            label="Model"
-          >
-            {models.map((modelOption) => (
-              <MenuItem key={modelOption} value={modelOption}>
-                {modelOption}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </div>
-      <div className="text-field-container">
-        <TextField
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your message here..."
-          multiline
-          fullWidth
-          minRows={3}
-          maxRows={3}
-          variant="outlined"
-          size="small"
-          autoComplete="off"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              transition: 'height 0.2s ease-in-out',
+    <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 2,
+        mt: 2,
+        p: 2,
+        backgroundColor: '#ffffff',
+        borderRadius: '4px',
+        border: '1px solid #e0e0e0',
+        alignItems: 'flex-start'
+      }}
+    >
+      <FormControl variant="outlined" size="small" sx={{ width: '200px' }}>
+        <InputLabel id="model-select-label">Model</InputLabel>
+        <Select
+          labelId="model-select-label"
+          id="model-select"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          label="Model"
+          sx={{ 
+            borderRadius: '4px',
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#e0e0e0'
             }
           }}
-        />
-      </div>
-      <div className="button-container" style={{ alignSelf: 'flex-start' }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleSendClick}
-          disabled={spinner || !message.trim()}
-          endIcon={spinner ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
         >
-          Submit
-        </Button>
-      </div>
-      <div className="reset-button-container" style={{ alignSelf: 'flex-start' }}>
-        <IconButton 
-          onClick={resetMessages} 
-          color="error" 
-          title="Reset conversation"
-          aria-label="Reset conversation"
-        >
-          <DeleteIcon />
-        </IconButton>
-      </div>
-    </div>
+          {models.map((modelOption) => (
+            <MenuItem key={modelOption} value={modelOption}>
+              {modelOption}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      
+      <TextField
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Type your message here..."
+        multiline
+        fullWidth
+        minRows={2}
+        maxRows={4}
+        variant="outlined"
+        size="small"
+        autoComplete="off"
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            transition: 'height 0.2s ease-in-out',
+            borderRadius: '4px',
+            backgroundColor: '#f5f5f5',
+            '&:hover': {
+              backgroundColor: '#f0f0f0'
+            },
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#e0e0e0'
+            }
+          }
+        }}
+      />
+      
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleSendClick}
+        disabled={spinner || !message.trim()}
+        endIcon={spinner ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+        sx={{ 
+          textTransform: 'none',
+          borderRadius: '4px',
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
+          }
+        }}
+      >
+        Submit
+      </Button>
+      
+      <IconButton 
+        onClick={resetMessages} 
+        color="error" 
+        title="Reset conversation"
+        aria-label="Reset conversation"
+        sx={{ 
+          border: '1px solid rgba(211, 47, 47, 0.5)',
+          borderRadius: '4px',
+          padding: '7px'
+        }}
+      >
+        <DeleteIcon fontSize="small" />
+      </IconButton>
+    </Box>
   );
 }
 

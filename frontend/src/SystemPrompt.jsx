@@ -34,9 +34,28 @@ function SystemPrompt({ onSystemPromptChange }) {
   };
 
   return (
-    <Box sx={{ mb: 1, mt: 1 }}>
-      <Paper variant="outlined" sx={{ p: 0.5 }}>
-        <Typography variant="caption" sx={{ pl: 1, color: 'text.secondary' }}>
+    <Box sx={{ mb: 3, mt: 1 }}>
+      <Paper 
+        variant="outlined" 
+        sx={{ 
+          p: 1, 
+          backgroundColor: '#ffffff',
+          border: '1px solid #e0e0e0',
+          borderRadius: '4px',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+        }}
+      >
+        <Typography 
+          variant="subtitle2" 
+          sx={{ 
+            pl: 1, 
+            pb: 0.5, 
+            color: '#666666',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
           System Prompt
         </Typography>
         <AceEditor
@@ -59,6 +78,10 @@ function SystemPrompt({ onSystemPromptChange }) {
             showLineNumbers: true,
             tabSize: 2,
             wrap: true,
+          }}
+          style={{
+            borderRadius: '4px',
+            border: '1px solid #e0e0e0'
           }}
         />
       </Paper>

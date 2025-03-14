@@ -58,34 +58,35 @@ function MessageView({ data }) {
     switch (role) {
       case "user":
         return {
-          backgroundColor: "#bbb", // Dark grey
+          backgroundColor: "#1976d2", // Docker blue
           color: "#FFFFFF", // White text
           alignSelf: "flex-end",
           marginLeft: "20%",
-          borderRadius: "8px",
+          borderRadius: "4px",
           padding: "10px 14px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
         };
       case "assistant":
         return {
-          backgroundColor: "#F5F5F5", // Very light grey
-          color: "#212121", // Very dark grey text
+          backgroundColor: "#FFFFFF", // White
+          color: "#333333", // Dark text
           alignSelf: "flex-start",
           marginRight: "20%",
-          borderRadius: "8px",
+          borderRadius: "4px",
           padding: "10px 14px",
           boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+          border: "1px solid #e0e0e0",
         };
       case "system":
         return {
-          backgroundColor: "#E0E0E0", // Light grey
-          color: "#424242", // Dark grey text
+          backgroundColor: "#f5f5f5", // Light grey
+          color: "#666666", // Medium grey text
           alignSelf: "center",
           fontStyle: "italic",
           width: "90%",
-          borderRadius: "6px",
+          borderRadius: "4px",
           padding: "8px 12px",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+          border: "1px solid #e0e0e0",
         };
       default:
         return {
@@ -100,8 +101,9 @@ function MessageView({ data }) {
       sx={{
         flexGrow: 1,
         overflowY: "auto",
-        padding: "10px",
-        border: "1px solid #ddd",
+        padding: "16px",
+        backgroundColor: "#f5f5f5",
+        border: "1px solid #e0e0e0",
         borderRadius: "4px",
         display: "flex",
         flexDirection: "column",

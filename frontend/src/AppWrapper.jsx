@@ -66,42 +66,57 @@ function AppWrapper() {
     <BrowserRouter>
       <RouteObserver setActivePage={setActivePage} />
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <AppBar position="static">
+        <AppBar position="static" sx={{ backgroundColor: '#1976d2', boxShadow: 'none' }}>
           <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 500 }}>
               Claude Client
             </Typography>
-            <Button
-              color="inherit"
-              component={Link}
-              to="/"
-              startIcon={<ChatIcon />}
-              sx={{
-                mr: 2,
-                backgroundColor:
-                  activePage === "chat"
-                    ? "rgba(255, 255, 255, 0.15)"
-                    : "transparent",
-              }}
-              onClick={() => setActivePage("chat")}
-            >
-              Chat
-            </Button>
-            <Button
-              color="inherit"
-              component={Link}
-              to="/tools"
-              startIcon={<BuildIcon />}
-              sx={{
-                backgroundColor:
-                  activePage === "tools"
-                    ? "rgba(255, 255, 255, 0.15)"
-                    : "transparent",
-              }}
-              onClick={() => setActivePage("tools")}
-            >
-              Tools
-            </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Button
+                color="inherit"
+                component={Link}
+                to="/"
+                startIcon={<ChatIcon />}
+                sx={{
+                  mr: 2,
+                  backgroundColor:
+                    activePage === "chat"
+                      ? "rgba(255, 255, 255, 0.15)"
+                      : "transparent",
+                  borderRadius: '4px',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                  }
+                }}
+                onClick={() => setActivePage("chat")}
+              >
+                Chat
+              </Button>
+              <Button
+                color="inherit"
+                component={Link}
+                to="/tools"
+                startIcon={<BuildIcon />}
+                sx={{
+                  mr: 2,
+                  backgroundColor:
+                    activePage === "tools"
+                      ? "rgba(255, 255, 255, 0.15)"
+                      : "transparent",
+                  borderRadius: '4px',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                  }
+                }}
+                onClick={() => setActivePage("tools")}
+              >
+                Tools
+              </Button>
+            </Box>
           </Toolbar>
         </AppBar>
         <Container sx={{ mt: 2, pb: 2, flexGrow: 1, overflow: 'auto' }}>

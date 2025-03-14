@@ -204,10 +204,41 @@ function Tools() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="tool tabs">
-          <Tab label="Tool Servers" />
-          <Tab label="Test Tools" />
+      <Box sx={{ 
+        borderBottom: 1, 
+        borderColor: '#e0e0e0', 
+        mb: 2,
+        backgroundColor: '#ffffff',
+        borderRadius: '4px 4px 0 0',
+        px: 2
+      }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange} 
+          aria-label="tool tabs"
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#1976d2',
+              height: 3
+            }
+          }}
+        >
+          <Tab 
+            label="Tool Servers" 
+            sx={{ 
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '0.9rem'
+            }}
+          />
+          <Tab 
+            label="Test Tools" 
+            sx={{ 
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '0.9rem'
+            }}
+          />
         </Tabs>
       </Box>
 

@@ -48,14 +48,41 @@ function App() {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <SystemPrompt onSystemPromptChange={handleSystemPromptChange} />
 
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}>
+      <Box sx={{ 
+        borderBottom: 1, 
+        borderColor: "#e0e0e0", 
+        mb: 2,
+        backgroundColor: '#ffffff',
+        borderRadius: '4px 4px 0 0',
+        px: 2
+      }}>
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
           aria-label="view tabs"
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#1976d2',
+              height: 3
+            }
+          }}
         >
-          <Tab label="Message View" />
-          <Tab label="JSON View" />
+          <Tab 
+            label="Message View" 
+            sx={{ 
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '0.9rem'
+            }} 
+          />
+          <Tab 
+            label="JSON View" 
+            sx={{ 
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '0.9rem'
+            }} 
+          />
         </Tabs>
       </Box>
 

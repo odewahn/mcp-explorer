@@ -139,15 +139,24 @@ function ToolTester() {
   }
 
   return (
-    <Box sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="h5" gutterBottom sx={{ fontWeight: 500, color: '#333' }}>
         Tool Tester
       </Typography>
-      <Typography variant="body1" paragraph>
+      <Typography variant="body1" paragraph sx={{ color: '#666' }}>
         Test tools directly by selecting a tool and filling out the form.
       </Typography>
 
-      <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          p: 3, 
+          mb: 3, 
+          border: '1px solid #e0e0e0',
+          borderRadius: '4px',
+          backgroundColor: '#ffffff'
+        }}
+      >
         <FormControl fullWidth sx={{ mb: 3 }}>
           <InputLabel id="tool-select-label">Select Tool</InputLabel>
           <Select
