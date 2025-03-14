@@ -438,7 +438,9 @@ function Tools() {
       </Snackbar>
         </Box>
       ) : (
-        <ToolTester />
+        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+          <ToolTester />
+        </Box>
       )}
     </Box>
   );

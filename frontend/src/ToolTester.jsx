@@ -139,7 +139,7 @@ function ToolTester() {
   }
 
   return (
-    <Box sx={{ mt: 2 }}>
+    <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <Typography variant="h5" gutterBottom sx={{ fontWeight: 500, color: '#333' }}>
         Tool Tester
       </Typography>
@@ -154,7 +154,9 @@ function ToolTester() {
           mb: 3, 
           border: '1px solid #e0e0e0',
           borderRadius: '4px',
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          flexGrow: 1,
+          overflow: 'auto'
         }}
       >
         <FormControl fullWidth sx={{ mb: 3 }}>
@@ -229,6 +231,10 @@ function ToolTester() {
                 showLineNumbers: true,
                 tabSize: 2,
                 wrap: true,
+              }}
+              style={{
+                maxHeight: '40vh',
+                overflow: 'auto'
               }}
             />
           </>
