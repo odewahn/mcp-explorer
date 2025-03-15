@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { 
-  IconButton, 
-  CircularProgress, 
-  TextField, 
-  Button, 
-  Select, 
-  MenuItem, 
-  FormControl, 
+import {
+  IconButton,
+  CircularProgress,
+  TextField,
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
   InputLabel,
-  Box
+  Box,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SendIcon from "@mui/icons-material/Send";
@@ -20,13 +20,13 @@ function InputMessage({ onNewMessage, systemPrompt }) {
   const [message, setMessage] = useState("");
   const [spinner, setSpinner] = useState(false);
   const [model, setModel] = useState("claude-3-5-sonnet-20241022");
-  
+
   // Available models
   const models = [
     "claude-3-5-sonnet-20241022",
     "claude-3-opus-20240229",
     "claude-3-sonnet-20240229",
-    "claude-3-haiku-20240307"
+    "claude-3-haiku-20240307",
   ];
 
   // This function is called when the user clicks the "Send" button or presses Enter.
@@ -46,13 +46,15 @@ function InputMessage({ onNewMessage, systemPrompt }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           text: message,
           model: model,
-          system_prompt: systemPrompt || "You are Claude, an AI assistant. Be helpful, harmless, and honest."
+          system_prompt:
+            systemPrompt ||
+            "You are Claude, an AI assistant. Be helpful, harmless, and honest.",
         }),
       });
-      
+
       if (!response.ok) {
         // Try to get the error details from the response
         let errorDetails = "Unknown server error";
@@ -63,13 +65,13 @@ function InputMessage({ onNewMessage, systemPrompt }) {
           // If we can't parse the JSON, use the status text
           errorDetails = response.statusText;
         }
-        
+
         console.error(`Server error (${response.status}): ${errorDetails}`);
         alert(`Error: ${errorDetails}`);
       } else {
         const data = await response.json();
       }
-      
+
       // Notify parent component that a new message was sent
       onNewMessage();
     } catch (error) {
@@ -86,7 +88,7 @@ function InputMessage({ onNewMessage, systemPrompt }) {
       e.preventDefault(); // Prevent default Enter behavior (new line)
       sendMessage(message);
       setMessage("");
-      
+
       // Reset the TextField by forcing a blur and focus
       const textField = e.target;
       textField.blur();
@@ -100,7 +102,7 @@ function InputMessage({ onNewMessage, systemPrompt }) {
       const response = await fetch("http://0.0.0.0:8000/reset-messages", {
         method: "POST",
       });
-      
+
       if (response.ok) {
         // Notify parent component that messages have been reset
         onNewMessage();
@@ -121,20 +123,20 @@ function InputMessage({ onNewMessage, systemPrompt }) {
   };
 
   return (
-    <Box 
+    <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'row',
+        display: "flex",
+        flexDirection: "row",
         gap: 2,
         mt: 2,
         p: 2,
-        backgroundColor: '#ffffff',
-        borderRadius: '4px',
-        border: '1px solid #e0e0e0',
-        alignItems: 'flex-start'
+        backgroundColor: "#ffffff",
+        borderRadius: "4px",
+        border: "1px solid #e0e0e0",
+        alignItems: "flex-start",
       }}
     >
-      <FormControl variant="outlined" size="small" sx={{ width: '200px' }}>
+      <FormControl variant="outlined" size="small" sx={{ width: "200px" }}>
         <InputLabel id="model-select-label">Model</InputLabel>
         <Select
           labelId="model-select-label"
@@ -142,11 +144,11 @@ function InputMessage({ onNewMessage, systemPrompt }) {
           value={model}
           onChange={(e) => setModel(e.target.value)}
           label="Model"
-          sx={{ 
-            borderRadius: '4px',
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#e0e0e0'
-            }
+          sx={{
+            borderRadius: "4px",
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#e0e0e0",
+            },
           }}
         >
           {models.map((modelOption) => (
@@ -156,7 +158,7 @@ function InputMessage({ onNewMessage, systemPrompt }) {
           ))}
         </Select>
       </FormControl>
-      
+
       <TextField
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -170,52 +172,58 @@ function InputMessage({ onNewMessage, systemPrompt }) {
         size="small"
         autoComplete="off"
         sx={{
-          '& .MuiOutlinedInput-root': {
-            transition: 'height 0.2s ease-in-out',
-            borderRadius: '4px',
-            backgroundColor: '#f5f5f5',
-            '&:hover': {
-              backgroundColor: '#f0f0f0'
+          "& .MuiOutlinedInput-root": {
+            transition: "height 0.2s ease-in-out",
+            borderRadius: "4px",
+            backgroundColor: "#f5f5f5",
+            "&:hover": {
+              backgroundColor: "#f0f0f0",
             },
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#e0e0e0'
-            }
-          }
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#e0e0e0",
+            },
+          },
         }}
       />
-      
+
       <Button
         variant="contained"
         color="primary"
         onClick={handleSendClick}
         disabled={spinner || !message.trim()}
-        endIcon={spinner ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-        sx={{ 
-          textTransform: 'none',
-          borderRadius: '4px',
-          boxShadow: 'none',
-          padding: '10px 20px',
-          height: '42px',
-          minWidth: '100px',
-          '&:hover': {
-            boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
-          }
+        endIcon={
+          spinner ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            <SendIcon />
+          )
+        }
+        sx={{
+          textTransform: "none",
+          borderRadius: "4px",
+          boxShadow: "none",
+          padding: "10px 20px",
+          height: "42px",
+          minWidth: "100px",
+          "&:hover": {
+            boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+          },
         }}
       >
         Submit
       </Button>
-      
-      <IconButton 
-        onClick={resetMessages} 
-        color="error" 
+
+      <IconButton
+        onClick={resetMessages}
+        color="error"
         title="Reset conversation"
         aria-label="Reset conversation"
-        sx={{ 
-          border: '1px solid rgba(211, 47, 47, 0.5)',
-          borderRadius: '4px',
-          padding: '8px',
-          height: '40px',
-          width: '40px'
+        sx={{
+          border: "1px solid rgba(211, 47, 47, 0.5)",
+          borderRadius: "4px",
+          padding: "8px",
+          height: "40px",
+          width: "40px",
         }}
       >
         <DeleteIcon fontSize="small" />
