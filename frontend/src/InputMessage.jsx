@@ -186,32 +186,32 @@ function InputMessage({ onNewMessage, systemPrompt }) {
         }}
       />
 
-      <Button
-        variant="contained"
+      <IconButton
         color="primary"
         onClick={handleSendClick}
         disabled={spinner || !message.trim()}
-        endIcon={
-          spinner ? (
-            <CircularProgress size={20} color="inherit" />
-          ) : (
-            <SendIcon />
-          )
-        }
+        aria-label="Send message"
         sx={{
-          textTransform: "none",
+          backgroundColor: "#1976d2",
+          color: "white",
+          border: "1px solid #1976d2",
           borderRadius: "4px",
-          boxShadow: "none",
-          padding: "10px 20px",
-          height: "42px",
-          minWidth: "100px",
+          padding: "8px",
+          height: "40px",
+          width: "40px",
           "&:hover": {
+            backgroundColor: "#1565c0",
             boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+          },
+          "&.Mui-disabled": {
+            backgroundColor: "#e0e0e0",
+            color: "#9e9e9e",
+            border: "1px solid #e0e0e0",
           },
         }}
       >
-        Submit
-      </Button>
+        {spinner ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
+      </IconButton>
 
       <IconButton
         onClick={resetMessages}
