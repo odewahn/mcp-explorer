@@ -58,8 +58,8 @@ function MessageView({ data }) {
     switch (role) {
       case "user":
         return {
-          backgroundColor: "#1976d2", // Docker blue
-          color: "#FFFFFF", // White text
+          backgroundColor: "#ECEFF1", // Docker blue
+          color: "#263238", // White text
           alignSelf: "flex-end",
           marginLeft: "20%",
           borderRadius: "4px",
