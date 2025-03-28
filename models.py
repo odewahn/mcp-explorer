@@ -27,6 +27,8 @@ class ToolsResponse(BaseModel):
 class ToolServer(BaseModel):
     url: str
     name: str = ""  # Optional name, will be auto-generated if not provided
+    server_type: str = "sse"  # Default to SSE, can be "sse" or "stdio"
+    server_type: str = "sse"  # Default to SSE, can be "sse" or "stdio"
 
 
 class ToolServersResponse(BaseModel):
