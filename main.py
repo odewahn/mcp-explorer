@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import anyio
+import logging
 from typing import Optional, List, Dict, Any
 from contextlib import AsyncExitStack
 from collections import deque
@@ -15,6 +16,17 @@ import uvicorn
 
 import os
 import webbrowser
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("mcp_explorer.log")
+    ]
+)
+logger = logging.getLogger("mcp_explorer")
 
 # Import our custom modules
 from models import (
@@ -247,14 +259,21 @@ class MCPClient:
             # Create and connect the STDIO server connection
             from server import STDIOServerConnection
 
+            logger.info(f"Creating STDIO connection to: {server_url}")
             connection = STDIOServerConnection()
+            
+            # Set a longer timeout for initial connection if needed
+            logger.info("Attempting to connect to STDIO server...")
             success = await connection.connect(server_url)
 
             if not success:
+                logger.error("Failed to connect to STDIO server")
                 return False
 
             # List available tools to verify connection
+            logger.info("Connection successful, listing tools...")
             tools = await connection.list_tools()
+            logger.info(f"Found {len(tools)} tools on STDIO server")
 
             # Store the connection and tools
             self.tool_servers[server_name] = {
@@ -275,13 +294,14 @@ class MCPClient:
             # Update the available tools list
             self.refresh_available_tools()
 
-            print(
-                f"\nConnected to STDIO server {server_name} with tools:",
-                [tool["name"] for tool in tools],
+            logger.info(
+                f"Connected to STDIO server {server_name} with tools: {[tool['name'] for tool in tools]}"
             )
             return True
         except Exception as e:
-            print(f"Error connecting to STDIO server {server_name}: {str(e)}")
+            import traceback
+            logger.error(f"Error connecting to STDIO server {server_name}: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return False
 
     async def refresh_tools(self):
@@ -482,6 +502,8 @@ async def add_tool_server(server: ToolServer):
             # If name exists, generate a unique one
             server_name = f"{server_name}-{int(time.time())}"
 
+        logger.info(f"Adding new {server.server_type} server: {server_name} at {server.url}")
+        
         # Connect to the new server
         success = await client.connect_to_server(
             server_url=server.url,
@@ -489,10 +511,11 @@ async def add_tool_server(server: ToolServer):
             server_name=server_name,
         )
         if not success:
-            raise HTTPException(
-                status_code=500, detail=f"Failed to connect to server at {server.url}"
-            )
+            error_msg = f"Failed to connect to server at {server.url}"
+            logger.error(error_msg)
+            raise HTTPException(status_code=500, detail=error_msg)
 
+        logger.info(f"Successfully added server {server_name}")
         return {
             "status": "success",
             "message": f"Connected to server {server_name} at {server.url}",
@@ -500,9 +523,11 @@ async def add_tool_server(server: ToolServer):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to add tool server: {str(e)}"
-        )
+        import traceback
+        error_msg = f"Failed to add tool server: {str(e)}"
+        logger.error(error_msg)
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=error_msg)
 
 
 @app.get("/tool-servers", response_model=ToolServersResponse)
@@ -573,9 +598,30 @@ async def reset_messages():
         )
 
 
-def main():
+@app.get("/create-test-stdio-server")
+async def create_test_server():
+    """Create a test STDIO server for testing"""
+    try:
+        from server import create_test_stdio_server
+        
+        filepath = create_test_stdio_server()
+        logger.info(f"Created test STDIO server at: {filepath}")
+        
+        # Return the command to run the server
+        command = f"python {filepath}"
+        return {
+            "status": "success", 
+            "message": f"Test STDIO server created at {filepath}",
+            "command": command
+        }
+    except Exception as e:
+        logger.error(f"Error creating test server: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create test server: {str(e)}"
+        )
 
-    # chec if o.s.environ.get("ENV") is set to "dev"
+def main():
+    # Check if os.environ.get("ENV") is set to "dev"
     if os.environ.get("ENV") == "dev":
         url = "http://localhost:5173"
     else:
