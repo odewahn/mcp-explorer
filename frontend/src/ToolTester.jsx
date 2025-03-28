@@ -10,8 +10,12 @@ import {
   Select,
   MenuItem,
   Divider,
-  Alert
+  Alert,
+  Chip,
+  Tooltip
 } from '@mui/material';
+import StorageIcon from '@mui/icons-material/Storage';
+import TerminalIcon from '@mui/icons-material/Terminal';
 import AceEditor from 'react-ace';
 import { JsonForms } from '@jsonforms/react';
 import { materialRenderers, materialCells } from '@jsonforms/material-renderers';
@@ -30,10 +34,11 @@ function ToolTester() {
   const [result, setResult] = useState('');
   const [error, setError] = useState(null);
   const [executing, setExecuting] = useState(false);
+  const [servers, setServers] = useState([]);
 
-  // Fetch tools on component mount and check for preselected tool
+  // Fetch tools and servers on component mount and check for preselected tool
   useEffect(() => {
-    fetchTools().then(() => {
+    Promise.all([fetchTools(), fetchServers()]).then(() => {
       // Check if a tool was selected from the tool list
       const preselectedTool = sessionStorage.getItem('selectedTool');
       if (preselectedTool) {
@@ -43,6 +48,21 @@ function ToolTester() {
       }
     });
   }, []);
+
+  const fetchServers = async () => {
+    try {
+      const response = await fetch('http://0.0.0.0:8000/tool-servers');
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      setServers(data.servers);
+      return data.servers;
+    } catch (error) {
+      console.error('Error fetching servers:', error);
+      return [];
+    }
+  };
 
   const fetchTools = async () => {
     try {
@@ -138,6 +158,18 @@ function ToolTester() {
     );
   }
 
+  // Helper function to determine server type
+  const getServerType = (serverName) => {
+    const server = servers.find(s => s.name === serverName);
+    if (!server) return 'SSE'; // Default
+    
+    // Check if the URL looks like a command (no http/https)
+    if (server.url && !server.url.startsWith('http')) {
+      return 'STDIO';
+    }
+    return 'SSE';
+  };
+
   return (
     <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <Typography variant="h5" gutterBottom sx={{ fontWeight: 500, color: '#333' }}>
@@ -170,7 +202,17 @@ function ToolTester() {
           >
             {tools.map((tool) => (
               <MenuItem key={tool.name} value={tool.name}>
-                {tool.name}
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+                  <span>{tool.name}</span>
+                  <Tooltip title={getServerType(tool.server)}>
+                    <Chip 
+                      size="small" 
+                      label={tool.server} 
+                      icon={getServerType(tool.server) === 'STDIO' ? <TerminalIcon fontSize="small" /> : <StorageIcon fontSize="small" />}
+                      sx={{ ml: 1 }}
+                    />
+                  </Tooltip>
+                </Box>
               </MenuItem>
             ))}
           </Select>

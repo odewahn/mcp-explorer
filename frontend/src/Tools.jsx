@@ -26,7 +26,12 @@ import {
   Alert,
   Snackbar,
   Tabs,
-  Tab
+  Tab,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText
 } from '@mui/material';
 import BuildIcon from '@mui/icons-material/Build';
 import AddIcon from '@mui/icons-material/Add';
@@ -42,7 +47,7 @@ function Tools() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [newServer, setNewServer] = useState({ name: '', url: '' });
+  const [newServer, setNewServer] = useState({ name: '', url: '', server_type: 'sse' });
   const [expandedTool, setExpandedTool] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [tabValue, setTabValue] = useState(0);
@@ -397,18 +402,41 @@ function Tools() {
           <DialogContentText>
             Enter the URL of the MCP tool server you want to connect to.
           </DialogContentText>
+          <FormControl fullWidth margin="dense">
+            <InputLabel id="server-type-label">Server Type</InputLabel>
+            <Select
+              labelId="server-type-label"
+              id="server-type"
+              value={newServer.server_type || "sse"}
+              label="Server Type"
+              onChange={(e) => setNewServer({ ...newServer, server_type: e.target.value })}
+            >
+              <MenuItem value="sse">SSE</MenuItem>
+              <MenuItem value="stdio">STDIO</MenuItem>
+            </Select>
+            <FormHelperText>
+              {newServer.server_type === "stdio" 
+                ? "STDIO servers run as a subprocess with stdin/stdout communication" 
+                : "SSE servers use Server-Sent Events over HTTP"}
+            </FormHelperText>
+          </FormControl>
+          
           <TextField
             autoFocus
             margin="dense"
             id="url"
-            label="Server URL"
-            type="url"
+            label={newServer.server_type === "stdio" ? "Command to Execute" : "Server URL"}
+            type={newServer.server_type === "stdio" ? "text" : "url"}
             fullWidth
             variant="outlined"
             value={newServer.url}
             onChange={(e) => setNewServer({ ...newServer, url: e.target.value })}
-            placeholder="http://localhost:8080/sse"
-            helperText="The URL should point to the SSE endpoint of the MCP server"
+            placeholder={newServer.server_type === "stdio" 
+              ? "python mcp_server.py" 
+              : "http://localhost:8080/sse"}
+            helperText={newServer.server_type === "stdio"
+              ? "The command to execute the STDIO server (e.g., 'python server.py')"
+              : "The URL should point to the SSE endpoint of the MCP server"}
           />
           <TextField
             margin="dense"
