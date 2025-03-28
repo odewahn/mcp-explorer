@@ -66,6 +66,127 @@ class ToolCallResponse(BaseModel):
     result: str
 
 
+from abc import ABC, abstractmethod
+
+class MCPServerConnection(ABC):
+    """Abstract base class for MCP server connections"""
+    
+    @abstractmethod
+    async def connect(self, server_url: str) -> bool:
+        """Connect to an MCP server"""
+        pass
+    
+    @abstractmethod
+    async def disconnect(self) -> None:
+        """Disconnect from the MCP server"""
+        pass
+    
+    @abstractmethod
+    async def list_tools(self) -> List[Dict[str, Any]]:
+        """List available tools from the server"""
+        pass
+    
+    @abstractmethod
+    async def call_tool(self, tool_name: str, tool_args: Dict[str, Any]) -> Any:
+        """Call a tool with the given arguments"""
+        pass
+    
+    @property
+    @abstractmethod
+    def is_connected(self) -> bool:
+        """Check if the connection is active"""
+        pass
+
+
+class SSEServerConnection(MCPServerConnection):
+    """Implementation of MCP server connection using SSE transport"""
+    
+    def __init__(self):
+        self.session = None
+        self.streams_context = None
+        self.session_context = None
+        self.tools = []
+        self._connected = False
+    
+    async def connect(self, server_url: str) -> bool:
+        """Connect to an MCP server running with SSE transport"""
+        try:
+            # Store the context managers so they stay alive
+            self.streams_context = sse_client(url=server_url)
+            streams = await self.streams_context.__aenter__()
+
+            self.session_context = ClientSession(*streams)
+            self.session = await self.session_context.__aenter__()
+
+            # Initialize
+            await self.session.initialize()
+
+            # List available tools to verify connection
+            response = await self.session.list_tools()
+            self.tools = [
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "input_schema": tool.inputSchema,
+                }
+                for tool in response.tools
+            ]
+            
+            self._connected = True
+            return True
+        except Exception as e:
+            print(f"Error connecting to SSE server: {str(e)}")
+            self._connected = False
+            return False
+    
+    async def disconnect(self) -> None:
+        """Disconnect from the MCP server"""
+        try:
+            if self.session_context:
+                await self.session_context.__aexit__(None, None, None)
+            if self.streams_context:
+                await self.streams_context.__aexit__(None, None, None)
+            self._connected = False
+        except Exception as e:
+            print(f"Error disconnecting from SSE server: {str(e)}")
+    
+    async def list_tools(self) -> List[Dict[str, Any]]:
+        """List available tools from the server"""
+        if not self.is_connected:
+            raise Exception("Not connected to server")
+        
+        try:
+            response = await self.session.list_tools()
+            self.tools = [
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "input_schema": tool.inputSchema,
+                }
+                for tool in response.tools
+            ]
+            return self.tools
+        except Exception as e:
+            print(f"Error listing tools: {str(e)}")
+            raise
+    
+    async def call_tool(self, tool_name: str, tool_args: Dict[str, Any]) -> Any:
+        """Call a tool with the given arguments"""
+        if not self.is_connected:
+            raise Exception("Not connected to server")
+        
+        try:
+            return await self.session.call_tool(tool_name, tool_args)
+        except Exception as e:
+            print(f"Error calling tool {tool_name}: {str(e)}")
+            raise
+    
+    @property
+    def is_connected(self) -> bool:
+        """Check if the connection is active"""
+        return self._connected and self.session is not None
+
+
 class MCPClient:
     def __init__(self):
         # Initialize session and client objects
@@ -86,33 +207,26 @@ class MCPClient:
     ):
         """Connect to an MCP server running with SSE transport"""
         try:
-            # Store the context managers so they stay alive
-            streams_context = sse_client(url=server_url)
-            streams = await streams_context.__aenter__()
-
-            session_context = ClientSession(*streams)
-            session = await session_context.__aenter__()
-
-            # Initialize
-            await session.initialize()
-
+            # Create and connect the SSE server connection
+            connection = SSEServerConnection()
+            success = await connection.connect(server_url)
+            
+            if not success:
+                return False
+                
             # List available tools to verify connection
-            print(f"Initialized SSE client for {server_name}...")
-            print("Listing tools...")
-            response = await session.list_tools()
-            tools = response.tools
-
-            # Store the session and contexts
+            tools = await connection.list_tools()
+            
+            # Store the connection and tools
             self.tool_servers[server_name] = {
                 "url": server_url,
-                "session": session,
-                "streams_context": streams_context,
-                "session_context": session_context,
+                "connection": connection,
+                "session": connection.session,  # For backward compatibility
                 "tools": [
                     {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "input_schema": tool.inputSchema,
+                        "name": tool["name"],
+                        "description": tool["description"],
+                        "input_schema": tool["input_schema"],
                         "server": server_name,
                     }
                     for tool in tools
@@ -124,7 +238,7 @@ class MCPClient:
 
             print(
                 f"\nConnected to server {server_name} with tools:",
-                [tool.name for tool in tools],
+                [tool["name"] for tool in tools],
             )
             return True
         except Exception as e:
@@ -140,10 +254,8 @@ class MCPClient:
     async def cleanup(self):
         """Properly clean up all sessions and streams"""
         for server_name, server_info in self.tool_servers.items():
-            if "session_context" in server_info:
-                await server_info["session_context"].__aexit__(None, None, None)
-            if "streams_context" in server_info:
-                await server_info["streams_context"].__aexit__(None, None, None)
+            if "connection" in server_info:
+                await server_info["connection"].disconnect()
         self.tool_servers = {}
 
     async def process_query(
@@ -223,12 +335,12 @@ class MCPClient:
                     )
                     continue
 
-                # Get the session for this server
-                session = self.tool_servers[server_name]["session"]
+                # Get the connection for this server
+                connection = self.tool_servers[server_name]["connection"]
 
                 # Execute tool call
                 try:
-                    result = await session.call_tool(tool_name, tool_args)
+                    result = await connection.call_tool(tool_name, tool_args)
                     tool_results.append({"call": tool_name, "result": result})
                     tool_call_text = f"[Calling tool {tool_name} with args {tool_args}]"
                     final_text.append(tool_call_text)
@@ -283,18 +395,20 @@ class MCPClient:
                 continue
 
             server_info = self.tool_servers[server_name]
-            if "session" in server_info:
+            if "connection" in server_info:
                 try:
                     print(f"Refreshing tools for server: {server_name}")
-                    response = await server_info["session"].list_tools()
+                    connection = server_info["connection"]
+                    tools = await connection.list_tools()
+                    
                     server_info["tools"] = [
                         {
-                            "name": tool.name,
-                            "description": tool.description,
-                            "input_schema": tool.inputSchema,
+                            "name": tool["name"],
+                            "description": tool["description"],
+                            "input_schema": tool["input_schema"],
                             "server": server_name,  # Keep server info for our internal tracking
                         }
-                        for tool in response.tools
+                        for tool in tools
                     ]
                     print(
                         f"Found {len(server_info['tools'])} tools in server {server_name}"
@@ -434,17 +548,17 @@ async def call_tool(request: ToolCallRequest):
                 detail=f"Tool {request.tool_name} not found in any connected server",
             )
 
-        session = client.tool_servers[server_name]["session"]
-        if not session:
+        connection = client.tool_servers[server_name]["connection"]
+        if not connection:
             raise HTTPException(
                 status_code=503,
-                detail=f"Session for server {server_name} not initialized",
+                detail=f"Connection for server {server_name} not initialized",
             )
 
         print(f"Calling tool: {request.tool_name} with args: {request.tool_args}")
 
-        # Call the tool using the session
-        result = await session.call_tool(request.tool_name, request.tool_args)
+        # Call the tool using the connection
+        result = await connection.call_tool(request.tool_name, request.tool_args)
 
         # Extract the content properly based on its type
         content_text = ""
@@ -544,12 +658,10 @@ async def remove_tool_server(server_name: str):
         # Update available tools list immediately to prevent using tools from this server
         client.refresh_available_tools()
 
-        # Now clean up the session in a try/except block
+        # Now clean up the connection in a try/except block
         try:
-            if "session_context" in server_info:
-                await server_info["session_context"].__aexit__(None, None, None)
-            if "streams_context" in server_info:
-                await server_info["streams_context"].__aexit__(None, None, None)
+            if "connection" in server_info:
+                await server_info["connection"].disconnect()
         except Exception as e:
             print(f"Warning: Error while cleaning up server {server_name}: {str(e)}")
             # Continue with removal even if cleanup fails
