@@ -233,6 +233,50 @@ class MCPClient:
 
         return "\n".join(final_text)
 
+    async def connect_to_stdio_server(
+        self, server_url: str, server_name: str = "default"
+    ):
+        """Connect to an MCP server running with STDIO transport"""
+        try:
+            # Create and connect the STDIO server connection
+            from server import STDIOServerConnection
+            connection = STDIOServerConnection()
+            success = await connection.connect(server_url)
+            
+            if not success:
+                return False
+                
+            # List available tools to verify connection
+            tools = await connection.list_tools()
+            
+            # Store the connection and tools
+            self.tool_servers[server_name] = {
+                "url": server_url,
+                "connection": connection,
+                "session": connection,  # For backward compatibility
+                "tools": [
+                    {
+                        "name": tool["name"],
+                        "description": tool["description"],
+                        "input_schema": tool["input_schema"],
+                        "server": server_name,
+                    }
+                    for tool in tools
+                ],
+            }
+
+            # Update the available tools list
+            self.refresh_available_tools()
+
+            print(
+                f"\nConnected to STDIO server {server_name} with tools:",
+                [tool["name"] for tool in tools],
+            )
+            return True
+        except Exception as e:
+            print(f"Error connecting to STDIO server {server_name}: {str(e)}")
+            return False
+            
     async def refresh_tools(self):
         """Refresh the list of available tools from all servers"""
         updated_tools = []
@@ -502,50 +546,6 @@ async def remove_tool_server(server_name: str):
             # Continue with removal even if cleanup fails
 
         return {"status": "success", "message": f"Removed server {server_name}"}
-    
-    async def connect_to_stdio_server(
-        self, server_url: str, server_name: str = "default"
-    ):
-        """Connect to an MCP server running with STDIO transport"""
-        try:
-            # Create and connect the STDIO server connection
-            from server import STDIOServerConnection
-            connection = STDIOServerConnection()
-            success = await connection.connect(server_url)
-            
-            if not success:
-                return False
-                
-            # List available tools to verify connection
-            tools = await connection.list_tools()
-            
-            # Store the connection and tools
-            self.tool_servers[server_name] = {
-                "url": server_url,
-                "connection": connection,
-                "session": connection,  # For backward compatibility
-                "tools": [
-                    {
-                        "name": tool["name"],
-                        "description": tool["description"],
-                        "input_schema": tool["input_schema"],
-                        "server": server_name,
-                    }
-                    for tool in tools
-                ],
-            }
-
-            # Update the available tools list
-            self.refresh_available_tools()
-
-            print(
-                f"\nConnected to STDIO server {server_name} with tools:",
-                [tool["name"] for tool in tools],
-            )
-            return True
-        except Exception as e:
-            print(f"Error connecting to STDIO server {server_name}: {str(e)}")
-            return False
     except HTTPException:
         raise
     except Exception as e:
