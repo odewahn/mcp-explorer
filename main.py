@@ -18,8 +18,14 @@ import webbrowser
 
 # Import our custom modules
 from models import (
-    Query, MessageResponse, Tool, ToolsResponse, 
-    ToolServer, ToolServersResponse, ToolCallRequest, ToolCallResponse
+    Query,
+    MessageResponse,
+    Tool,
+    ToolsResponse,
+    ToolServer,
+    ToolServersResponse,
+    ToolCallRequest,
+    ToolCallResponse,
 )
 from server import SSEServerConnection
 
@@ -53,7 +59,7 @@ class MCPClient:
         else:
             print(f"Unsupported server type: {server_type}")
             return False
-            
+
     async def connect_to_sse_server(
         self, server_url: str, server_name: str = "default"
     ):
@@ -240,15 +246,16 @@ class MCPClient:
         try:
             # Create and connect the STDIO server connection
             from server import STDIOServerConnection
+
             connection = STDIOServerConnection()
             success = await connection.connect(server_url)
-            
+
             if not success:
                 return False
-                
+
             # List available tools to verify connection
             tools = await connection.list_tools()
-            
+
             # Store the connection and tools
             self.tool_servers[server_name] = {
                 "url": server_url,
@@ -276,7 +283,7 @@ class MCPClient:
         except Exception as e:
             print(f"Error connecting to STDIO server {server_name}: {str(e)}")
             return False
-            
+
     async def refresh_tools(self):
         """Refresh the list of available tools from all servers"""
         updated_tools = []
@@ -477,9 +484,9 @@ async def add_tool_server(server: ToolServer):
 
         # Connect to the new server
         success = await client.connect_to_server(
-            server_url=server.url, 
+            server_url=server.url,
             server_type=server.server_type,
-            server_name=server_name
+            server_name=server_name,
         )
         if not success:
             raise HTTPException(
@@ -568,7 +575,12 @@ async def reset_messages():
 
 def main():
 
-    webbrowser.open("http://localhost:8000/static")
+    # chec if o.s.environ.get("ENV") is set to "dev"
+    if os.environ.get("ENV") == "dev":
+        url = "http://localhost:5173"
+    else:
+        url = "http://localhost:8000/static"
+    webbrowser.open(url)
     # Run the FastAPI app directly (this will create its own event loop)
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
