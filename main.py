@@ -20,11 +20,8 @@ import webbrowser
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("mcp_explorer.log")
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler("mcp_explorer.log")],
 )
 logger = logging.getLogger("mcp_explorer")
 
@@ -135,7 +132,10 @@ class MCPClient:
         # Add user message to history
         self.conversation_history.append({"role": "user", "content": query})
 
-        messages = [{"role": "user", "content": query}]
+        # messages = [{"role": "user", "content": query}]
+        # Send the full conversation history to Claude
+        # This allows Claude to see the context of the conversation
+        messages = self.conversation_history.copy()
 
         # Refresh the tools list to ensure we have the latest
         await self.refresh_tools()
@@ -201,7 +201,7 @@ class MCPClient:
                     error_msg = f"Tool {tool_name} not found in any connected server"
                     final_text.append(f"[Error: {error_msg}]")
                     self.conversation_history.append(
-                        {"role": "system", "content": f"Error: {error_msg}"}
+                        {"role": "assistant", "content": f"Error: {error_msg}"}
                     )
                     continue
 
@@ -219,8 +219,12 @@ class MCPClient:
                     self.conversation_history.append(
                         {"role": "assistant", "content": tool_call_text}
                     )
+
                     self.conversation_history.append(
-                        {"role": "system", "content": f"Tool result: {result.content}"}
+                        {
+                            "role": "assistant",
+                            "content": f"Tool result: {result.content}",
+                        }
                     )
 
                     # Continue conversation with tool results
@@ -246,7 +250,7 @@ class MCPClient:
                     error_msg = f"Error calling tool {tool_name}: {str(e)}"
                     final_text.append(f"[Error: {error_msg}]")
                     self.conversation_history.append(
-                        {"role": "system", "content": f"Error: {error_msg}"}
+                        {"role": "assistant", "content": f"Error: {error_msg}"}
                     )
 
         return "\n".join(final_text)
@@ -261,7 +265,7 @@ class MCPClient:
 
             logger.info(f"Creating STDIO connection to: {server_url}")
             connection = STDIOServerConnection()
-            
+
             # Set a longer timeout for initial connection if needed
             logger.info("Attempting to connect to STDIO server...")
             success = await connection.connect(server_url)
@@ -300,6 +304,7 @@ class MCPClient:
             return True
         except Exception as e:
             import traceback
+
             logger.error(f"Error connecting to STDIO server {server_name}: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             return False
@@ -502,8 +507,10 @@ async def add_tool_server(server: ToolServer):
             # If name exists, generate a unique one
             server_name = f"{server_name}-{int(time.time())}"
 
-        logger.info(f"Adding new {server.server_type} server: {server_name} at {server.url}")
-        
+        logger.info(
+            f"Adding new {server.server_type} server: {server_name} at {server.url}"
+        )
+
         # Connect to the new server
         success = await client.connect_to_server(
             server_url=server.url,
@@ -524,6 +531,7 @@ async def add_tool_server(server: ToolServer):
         raise
     except Exception as e:
         import traceback
+
         error_msg = f"Failed to add tool server: {str(e)}"
         logger.error(error_msg)
         logger.error(f"Traceback: {traceback.format_exc()}")
@@ -603,22 +611,23 @@ async def create_test_server():
     """Create a test STDIO server for testing"""
     try:
         from server import create_test_stdio_server
-        
+
         filepath = create_test_stdio_server()
         logger.info(f"Created test STDIO server at: {filepath}")
-        
+
         # Return the command to run the server
         command = f"python {filepath}"
         return {
-            "status": "success", 
+            "status": "success",
             "message": f"Test STDIO server created at {filepath}",
-            "command": command
+            "command": command,
         }
     except Exception as e:
         logger.error(f"Error creating test server: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Failed to create test server: {str(e)}"
         )
+
 
 def main():
     # Check if os.environ.get("ENV") is set to "dev"
