@@ -3,6 +3,7 @@ import { Tabs, Tab, Box, CircularProgress } from "@mui/material";
 import InputMessage from "./InputMessage";
 import JSONView from "./JSONView";
 import MessageView from "./MessageView";
+import TextView from "./TextView";
 import SystemPrompt from "./SystemPrompt";
 
 function App() {
@@ -45,43 +46,53 @@ function App() {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <SystemPrompt onSystemPromptChange={handleSystemPromptChange} />
 
-      <Box sx={{ 
-        borderBottom: 1, 
-        borderColor: "#e0e0e0", 
-        mb: 2,
-        backgroundColor: '#ffffff',
-        borderRadius: '4px 4px 0 0',
-        px: 2
-      }}>
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: "#e0e0e0",
+          mb: 2,
+          backgroundColor: "#ffffff",
+          borderRadius: "4px 4px 0 0",
+          px: 2,
+        }}
+      >
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
           aria-label="view tabs"
           sx={{
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#1976d2',
-              height: 3
-            }
+            "& .MuiTabs-indicator": {
+              backgroundColor: "#1976d2",
+              height: 3,
+            },
           }}
         >
-          <Tab 
-            label="Message View" 
-            sx={{ 
-              textTransform: 'none',
+          <Tab
+            label="Message View"
+            sx={{
+              textTransform: "none",
               fontWeight: 500,
-              fontSize: '0.9rem'
-            }} 
+              fontSize: "0.9rem",
+            }}
           />
-          <Tab 
-            label="JSON View" 
-            sx={{ 
-              textTransform: 'none',
+          <Tab
+            label="JSON View"
+            sx={{
+              textTransform: "none",
               fontWeight: 500,
-              fontSize: '0.9rem'
-            }} 
+              fontSize: "0.9rem",
+            }}
+          />
+          <Tab
+            label="Text View"
+            sx={{
+              textTransform: "none",
+              fontWeight: 500,
+              fontSize: "0.9rem",
+            }}
           />
         </Tabs>
       </Box>
@@ -94,6 +105,7 @@ function App() {
         <>
           {tabValue === 0 && <MessageView data={messages} />}
           {tabValue === 1 && <JSONView data={messages} />}
+          {tabValue === 2 && <TextView data={messages} />}
         </>
       )}
 
