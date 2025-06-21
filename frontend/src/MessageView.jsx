@@ -125,6 +125,18 @@ function MessageView({ data }) {
   const renderToolUse = (item, messageIndex) => {
     const isExpanded = expandedTools[messageIndex] || false;
     
+    // Safety check for required properties
+    if (!item || !item.name) {
+      return (
+        <Box sx={{ mt: 1, mb: 1, color: 'error.main' }}>
+          Invalid tool call data
+        </Box>
+      );
+    }
+    
+    // Safely get input or use empty object if missing
+    const toolInput = item.input || {};
+    
     return (
       <Box sx={{ mt: 1, mb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -159,7 +171,7 @@ function MessageView({ data }) {
               Tool Parameters:
             </Box>
             <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto' }}>
-              {JSON.stringify(item.input, null, 2)}
+              {JSON.stringify(toolInput, null, 2)}
             </pre>
           </Paper>
         </Collapse>
@@ -171,13 +183,28 @@ function MessageView({ data }) {
   const renderToolResult = (item, messageIndex) => {
     const isExpanded = expandedTools[messageIndex] || false;
     
+    // Safety check for required properties
+    if (!item) {
+      return (
+        <Box sx={{ mt: 1, mb: 1, color: 'error.main' }}>
+          Invalid tool result data
+        </Box>
+      );
+    }
+    
+    // Safely determine if there's an error
+    const isError = Boolean(item.is_error);
+    
+    // Safely get content or use placeholder if missing
+    const resultContent = item.content || "[No content available]";
+    
     return (
       <Box sx={{ mt: 1, mb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <Chip 
-            icon={item.is_error ? <ErrorIcon /> : <CheckCircleIcon />} 
-            label={item.is_error ? "Tool Error" : "Tool Result"} 
-            color={item.is_error ? "error" : "success"} 
+            icon={isError ? <ErrorIcon /> : <CheckCircleIcon />} 
+            label={isError ? "Tool Error" : "Tool Result"} 
+            color={isError ? "error" : "success"} 
             variant="outlined" 
             size="small"
             sx={{ mr: 1 }}
@@ -196,16 +223,18 @@ function MessageView({ data }) {
             variant="outlined" 
             sx={{ 
               p: 1.5, 
-              backgroundColor: item.is_error ? '#fff8f8' : '#f8fff8',
+              backgroundColor: isError ? '#fff8f8' : '#f8fff8',
               maxHeight: '200px',
               overflow: 'auto'
             }}
           >
             <Box sx={{ fontWeight: 'bold', fontSize: '0.75rem', mb: 0.5 }}>
-              {item.is_error ? "Error:" : "Result:"}
+              {isError ? "Error:" : "Result:"}
             </Box>
             <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto' }}>
-              {item.content}
+              {typeof resultContent === 'string' 
+                ? resultContent 
+                : JSON.stringify(resultContent, null, 2)}
             </pre>
           </Paper>
         </Collapse>
@@ -236,15 +265,27 @@ function MessageView({ data }) {
       return (
         <Box>
           {message.content.map((item, itemIndex) => {
+            // Only render if showToolCalls is true
+            if (!showToolCalls) return null;
+            
             if (item.type === "tool_use") {
-              return showToolCalls && renderToolUse(item, `${index}-${itemIndex}`);
+              return renderToolUse(item, `${index}-${itemIndex}`);
             }
             if (item.type === "tool_result") {
-              return showToolCalls && renderToolResult(item, `${index}-${itemIndex}`);
+              return renderToolResult(item, `${index}-${itemIndex}`);
             }
             return null;
           })}
         </Box>
+      );
+    }
+    
+    // Handle case where content is an object but not an array
+    if (typeof message.content === "object") {
+      return (
+        <Typography variant="body2" color="text.secondary">
+          [Complex content - cannot display directly]
+        </Typography>
       );
     }
     
@@ -266,6 +307,11 @@ function MessageView({ data }) {
     // For tool messages, only show if showToolCalls is true
     if (Array.isArray(message.content)) {
       return showToolCalls;
+    }
+    
+    // For other object types, always show but content will be handled in renderMessageContent
+    if (typeof message.content === "object") {
+      return true;
     }
     
     return true;
