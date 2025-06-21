@@ -14,6 +14,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
+from query_processor import process_query_simple
+
 import os
 import webbrowser
 
@@ -127,10 +129,11 @@ class MCPClient:
                 await server_info["connection"].disconnect()
         self.tool_servers = {}
 
+    """ 
     async def process_query(
         self, system_prompt: str, query: str, model: str = "claude-3-5-sonnet-20241022"
     ) -> str:
-        """Process a query using Claude and available tools"""
+        #Process a query using Claude and available tools
         # Add user message to history
         self.conversation_history.append({"role": "user", "content": query})
 
@@ -256,6 +259,21 @@ class MCPClient:
                     )
 
         return "\n".join(final_text)
+    """
+
+    async def process_query(
+        self, system_prompt: str, query: str, model: str = "claude-3-5-sonnet-20241022"
+    ) -> str:
+        response, self.conversation_history = await process_query_simple(
+            anthropic_client=self.anthropic,
+            system_prompt=system_prompt,
+            query=query,
+            available_tools=self.available_tools,
+            tool_servers=self.tool_servers,
+            model=model,
+            conversation_history=getattr(self, "conversation_history", []),
+        )
+        return response
 
     async def connect_to_stdio_server(
         self, server_url: str, server_name: str = "default"
