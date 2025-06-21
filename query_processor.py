@@ -5,12 +5,17 @@ A clean, modular implementation for handling LLM interactions with MCP servers.
 Can be dropped into existing codebases with minimal integration effort.
 """
 
+import os
+import json
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional, Protocol
 import logging
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+# Check for debug mode
+DEBUG = os.environ.get("DEBUG", "").lower() in ("true", "1", "yes", "y")
 
 
 @dataclass
@@ -31,6 +36,18 @@ class ToolServerProtocol(Protocol):
         ...
 
 
+def log_message_to_file(message: Dict[str, Any]) -> None:
+    """Log a message to the session log file if DEBUG is enabled."""
+    if not DEBUG:
+        return
+    
+    try:
+        with open("session.log", "a") as f:
+            f.write(json.dumps(message, indent=2) + "\n\n")
+    except Exception as e:
+        logger.error(f"Error writing to session.log: {str(e)}")
+
+
 class ConversationManager:
     """Handles conversation history management with proper tool call structure."""
 
@@ -40,47 +57,51 @@ class ConversationManager:
 
     def add_user_message(self, content: str) -> None:
         """Add a user message to conversation history."""
-        self.history.append({"role": "user", "content": content})
+        message = {"role": "user", "content": content}
+        self.history.append(message)
+        log_message_to_file(message)
 
     def add_assistant_message(self, content: str) -> None:
         """Add an assistant message to conversation history."""
-        self.history.append({"role": "assistant", "content": content})
+        message = {"role": "assistant", "content": content}
+        self.history.append(message)
+        log_message_to_file(message)
 
     def add_tool_call_message(
         self, tool_name: str, tool_args: Dict[str, Any], tool_id: str
     ) -> None:
         """Add a tool call message to conversation history."""
-        self.history.append(
-            {
-                "role": "assistant",
-                "content": [
-                    {
-                        "type": "tool_use",
-                        "id": tool_id,
-                        "name": tool_name,
-                        "input": tool_args,
-                    }
-                ],
-            }
-        )
+        message = {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": tool_id,
+                    "name": tool_name,
+                    "input": tool_args,
+                }
+            ],
+        }
+        self.history.append(message)
+        log_message_to_file(message)
 
     def add_tool_result_message(
         self, tool_id: str, result_content: str, is_error: bool = False
     ) -> None:
         """Add a tool result message to conversation history."""
-        self.history.append(
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": tool_id,
-                        "content": result_content,
-                        "is_error": is_error,
-                    }
-                ],
-            }
-        )
+        message = {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tool_id,
+                    "content": result_content,
+                    "is_error": is_error,
+                }
+            ],
+        }
+        self.history.append(message)
+        log_message_to_file(message)
 
     def get_messages(self) -> List[Dict[str, Any]]:
         """Get a copy of the conversation history."""
@@ -350,6 +371,19 @@ class QueryProcessor:
         logger.info(f"Number of available tools: {len(clean_tools)}")
         if clean_tools:
             logger.debug(f"Tool names: {[tool['name'] for tool in clean_tools]}")
+        
+        # Log the API request if in debug mode
+        if DEBUG:
+            api_request = {
+                "request": {
+                    "model": model,
+                    "system": system_prompt,
+                    "max_tokens": max_tokens,
+                    "messages": messages,
+                    "tools": clean_tools
+                }
+            }
+            log_message_to_file(api_request)
 
         response = self.anthropic.messages.create(
             model=model,
@@ -358,6 +392,32 @@ class QueryProcessor:
             messages=messages,
             tools=clean_tools,
         )
+
+        # Log the API response if in debug mode
+        if DEBUG:
+            try:
+                # Create a simplified version of the response for logging
+                response_dict = {
+                    "response": {
+                        "id": response.id,
+                        "model": response.model,
+                        "content": [
+                            {
+                                "type": item.type,
+                                "text": item.text if hasattr(item, "text") else None,
+                                "tool_use": {
+                                    "id": item.id,
+                                    "name": item.name,
+                                    "input": item.input
+                                } if hasattr(item, "name") else None
+                            }
+                            for item in response.content
+                        ]
+                    }
+                }
+                log_message_to_file(response_dict)
+            except Exception as e:
+                logger.error(f"Error logging API response: {str(e)}")
 
         logger.info("Successfully received response from Anthropic API")
         return response
