@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Typography, Box, Paper } from "@mui/material";
 import AceEditor from "react-ace";
 
@@ -11,21 +11,34 @@ import "ace-builds/src-noconflict/ext-language_tools";
 function SystemPrompt({ onSystemPromptChange }) {
   const [systemPrompt, setSystemPrompt] = useState("");
 
+  // Save system prompt to localStorage
+  const saveSystemPrompt = useCallback((prompt) => {
+    localStorage.setItem('systemPrompt', prompt);
+  }, []);
+
   // Load the initial system prompt when component mounts
   useEffect(() => {
     // Default system prompt
     const defaultPrompt =
       "You are Claude, an AI assistant. Be helpful, harmless, and honest.";
-    setSystemPrompt(defaultPrompt);
+    
+    // Try to load from localStorage first
+    const savedPrompt = localStorage.getItem('systemPrompt');
+    const promptToUse = savedPrompt || defaultPrompt;
+    
+    setSystemPrompt(promptToUse);
 
     // Notify parent component of the initial value
     if (onSystemPromptChange) {
-      onSystemPromptChange(defaultPrompt);
+      onSystemPromptChange(promptToUse);
     }
-  }, []);
+  }, [onSystemPromptChange]);
 
   const handleChange = (newValue) => {
     setSystemPrompt(newValue);
+    
+    // Save to localStorage
+    saveSystemPrompt(newValue);
 
     // Notify parent component of the change
     if (onSystemPromptChange) {
