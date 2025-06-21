@@ -265,15 +265,63 @@ function MessageView({ data }) {
       return (
         <Box>
           {message.content.map((item, itemIndex) => {
-            // Only render if showToolCalls is true
-            if (!showToolCalls) return null;
-            
+            // For tool calls and results, always render a summary
+            // but only expand details if showToolCalls is true
             if (item.type === "tool_use") {
+              if (!showToolCalls) {
+                return (
+                  <Box key={itemIndex} sx={{ mt: 1, mb: 1 }}>
+                    <Chip 
+                      icon={<CodeIcon />} 
+                      label={`Tool Call: ${item.name}`}
+                      color="primary" 
+                      variant="outlined" 
+                      size="small"
+                    />
+                  </Box>
+                );
+              }
               return renderToolUse(item, `${index}-${itemIndex}`);
             }
+            
             if (item.type === "tool_result") {
+              // Always show a basic summary of tool results
+              const isError = Boolean(item.is_error);
+              
+              if (!showToolCalls) {
+                // Show a simple summary with the result content
+                return (
+                  <Box key={itemIndex} sx={{ mt: 1, mb: 1 }}>
+                    <Chip 
+                      icon={isError ? <ErrorIcon /> : <CheckCircleIcon />}
+                      label={isError ? "Tool Error" : "Tool Result"}
+                      color={isError ? "error" : "success"}
+                      variant="outlined" 
+                      size="small"
+                      sx={{ mb: 1 }}
+                    />
+                    <Box 
+                      sx={{ 
+                        pl: 1, 
+                        borderLeft: `3px solid ${isError ? '#f44336' : '#4caf50'}`,
+                        fontSize: '0.9rem',
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        maxHeight: '100px',
+                        overflow: 'auto'
+                      }}
+                    >
+                      {typeof item.content === 'string' 
+                        ? item.content 
+                        : JSON.stringify(item.content, null, 2)}
+                    </Box>
+                  </Box>
+                );
+              }
+              
               return renderToolResult(item, `${index}-${itemIndex}`);
             }
+            
             return null;
           })}
         </Box>
@@ -304,9 +352,10 @@ function MessageView({ data }) {
       return true;
     }
     
-    // For tool messages, only show if showToolCalls is true
+    // For tool messages, always show them
+    // The rendering will be different based on showToolCalls
     if (Array.isArray(message.content)) {
-      return showToolCalls;
+      return true;
     }
     
     // For other object types, always show but content will be handled in renderMessageContent

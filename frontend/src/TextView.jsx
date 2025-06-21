@@ -43,19 +43,20 @@ function TextView({ data }) {
         const tool = toolUses[0];
         return includeToolCalls 
           ? `🔧 **Using tool: ${tool.name}**\n\`\`\`json\n${JSON.stringify(tool.input, null, 2)}\n\`\`\``
-          : "_[Tool call omitted]_";
+          : `🔧 _Using tool: ${tool.name}_`;
       }
       
       if (toolResults.length > 0) {
         const result = toolResults[0];
+        // Always show tool results, but with different formatting based on includeToolCalls
         if (result.is_error) {
           return includeToolCalls
             ? `❌ **Tool Error**\n\`\`\`\n${result.content}\n\`\`\``
-            : "_[Tool error omitted]_";
+            : `❌ **Tool Error**: ${result.content}`;
         } else {
           return includeToolCalls
             ? `✅ **Tool Result**\n\`\`\`\n${result.content}\n\`\`\``
-            : "_[Tool result omitted]_";
+            : `✅ **Tool Result**: ${result.content}`;
         }
       }
     }
@@ -89,11 +90,7 @@ function TextView({ data }) {
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i];
       
-      // Skip tool messages if not including them
-      if (!includeToolCalls && Array.isArray(message.content)) {
-        continue;
-      }
-      
+      // Always include all messages, but format differently based on includeToolCalls
       const formattedContent = formatMessageContent(message.content);
       out += `**${message.role.toUpperCase()}**:  ${formattedContent}\n\n`;
     }
