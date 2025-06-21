@@ -262,7 +262,7 @@ class MCPClient:
     """
 
     async def process_query(
-        self, system_prompt: str, query: str, model: str = "claude-3-5-sonnet-20241022"
+        self, system_prompt: str, query: str, model: str = "claude-3-5-sonnet-20241022", max_tool_calls: int = 5
     ) -> str:
         response, self.conversation_history = await process_query_simple(
             anthropic_client=self.anthropic,
@@ -272,6 +272,7 @@ class MCPClient:
             tool_servers=self.tool_servers,
             model=model,
             conversation_history=getattr(self, "conversation_history", []),
+            max_tool_calls=max_tool_calls,
         )
         return response
 
@@ -425,9 +426,13 @@ async def process_query(query: Query, background_tasks: BackgroundTasks):
             f"System prompt: {query.system_prompt[:100]}..."
         )  # Log first 100 chars of system prompt
         print(f"Query text: {query.text[:100]}...")  # Log first 100 chars of query
+        
+        # Get max_tool_calls from the query
+        max_tool_calls = query.max_tool_calls
+        print(f"Max tool calls: {max_tool_calls}")
 
         response = await client.process_query(
-            query.system_prompt, query.text, query.model
+            query.system_prompt, query.text, query.model, max_tool_calls
         )
         print(f"Query processed successfully, response length: {len(response)}")
         return response

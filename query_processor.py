@@ -177,10 +177,12 @@ class ResponseProcessor:
     """Processes Claude API responses and handles tool calls."""
 
     def __init__(
-        self, conversation_manager: ConversationManager, tool_manager: ToolManager
+        self, conversation_manager: ConversationManager, tool_manager: ToolManager, max_tool_calls: int = 5
     ):
         self.conversation_manager = conversation_manager
         self.tool_manager = tool_manager
+        self.max_tool_calls = max_tool_calls
+        self.tool_call_count = 0
 
     async def process_response(
         self,
@@ -193,10 +195,12 @@ class ResponseProcessor:
         """
         Process the complete response from Claude, handling both text and tool calls.
         Returns only the final text response, with all tool calls properly stored as messages.
+        Supports multiple rounds of tool calls (up to max_tool_calls).
         """
         text_parts = []
         tool_calls_made = []
-
+        self.tool_call_count = 0
+        
         # First pass: collect text content and identify tool calls
         for content_item in response.content:
             if content_item.type == "text":
@@ -216,7 +220,45 @@ class ResponseProcessor:
         # Process each tool call separately
         for tool_call in tool_calls_made:
             await self._process_single_tool_call(tool_call)
+            self.tool_call_count += 1
 
+        # Continue processing additional tool calls if needed (up to max_tool_calls)
+        while self.tool_call_count < self.max_tool_calls:
+            # Get intermediate response from Claude to see if more tool calls are needed
+            intermediate_response = await self._get_intermediate_response(
+                anthropic_client, system_prompt, model, max_tokens
+            )
+            
+            # Check if the response contains more tool calls
+            new_tool_calls = []
+            has_text_content = False
+            
+            for content_item in intermediate_response.content:
+                if content_item.type == "text":
+                    has_text_content = True
+                    text_parts.append(content_item.text)
+                elif content_item.type == "tool_use":
+                    new_tool_calls.append(content_item)
+            
+            # If no more tool calls or we've reached the limit, break the loop
+            if not new_tool_calls:
+                # If there's text content, add it as the final response
+                if has_text_content:
+                    final_text_parts = [item.text for item in intermediate_response.content if item.type == "text"]
+                    final_text = "\n".join(final_text_parts)
+                    self.conversation_manager.add_assistant_message(final_text)
+                    return final_text
+                break
+                
+            # Process the new tool calls
+            for tool_call in new_tool_calls:
+                await self._process_single_tool_call(tool_call)
+                self.tool_call_count += 1
+                
+                # If we've reached the maximum number of tool calls, break
+                if self.tool_call_count >= self.max_tool_calls:
+                    break
+        
         # After all tool calls are complete, get Claude's final response
         final_response = await self._get_final_response(
             anthropic_client, system_prompt, model, max_tokens
@@ -245,6 +287,57 @@ class ResponseProcessor:
             self.conversation_manager.add_tool_result_message(
                 tool_id, error_content, is_error=True
             )
+
+    async def _get_intermediate_response(
+        self, anthropic_client, system_prompt: str, model: str, max_tokens: int
+    ):
+        """Get Claude's intermediate response to check for more tool calls."""
+        messages = self.conversation_manager.get_messages()
+
+        try:
+            # Get the clean tools for the API call
+            clean_tools = self.tool_manager.clean_tools_for_api()
+            
+            # Make the API call with tools enabled
+            response = anthropic_client.messages.create(
+                model=model,
+                system=system_prompt,
+                max_tokens=max_tokens,
+                messages=messages,
+                tools=clean_tools,
+            )
+            
+            # Log the intermediate response if in debug mode
+            if DEBUG:
+                try:
+                    response_dict = {
+                        "intermediate_response": {
+                            "id": response.id,
+                            "model": response.model,
+                            "content": [
+                                {
+                                    "type": item.type,
+                                    "text": item.text if hasattr(item, "text") else None,
+                                    "tool_use": {
+                                        "id": item.id,
+                                        "name": item.name,
+                                        "input": item.input
+                                    } if hasattr(item, "name") else None
+                                }
+                                for item in response.content
+                            ]
+                        }
+                    }
+                    log_message_to_file(response_dict)
+                except Exception as e:
+                    logger.error(f"Error logging intermediate API response: {str(e)}")
+            
+            return response
+
+        except Exception as e:
+            error_msg = f"Error in intermediate API call: {str(e)}"
+            logger.error(error_msg)
+            raise
 
     async def _get_final_response(
         self, anthropic_client, system_prompt: str, model: str, max_tokens: int
@@ -295,6 +388,7 @@ class QueryProcessor:
         available_tools: List[Dict],
         tool_servers: Dict,
         existing_conversation: Optional[List[Dict]] = None,
+        max_tool_calls: int = 5,
     ):
         """
         Initialize the query processor.
@@ -304,12 +398,13 @@ class QueryProcessor:
             available_tools: List of available tools (with 'server' field)
             tool_servers: Dict of server name -> server info with 'connection'
             existing_conversation: Optional existing conversation history to continue
+            max_tool_calls: Maximum number of tool calls to make in a single query (default: 5)
         """
         self.anthropic = anthropic_client
         self.conversation_manager = ConversationManager(existing_conversation)
         self.tool_manager = ToolManager(available_tools, tool_servers)
         self.response_processor = ResponseProcessor(
-            self.conversation_manager, self.tool_manager
+            self.conversation_manager, self.tool_manager, max_tool_calls
         )
 
     def get_conversation_history(self) -> List[Dict[str, Any]]:
@@ -433,15 +528,27 @@ async def process_query_simple(
     model: str = "claude-3-5-sonnet-20241022",
     max_tokens: int = 4096,
     conversation_history: Optional[List[Dict]] = None,
+    max_tool_calls: int = 5,
 ) -> tuple[str, List[Dict]]:
     """
     Simple function interface for processing queries.
+
+    Args:
+        anthropic_client: Anthropic client instance
+        system_prompt: System prompt for Claude
+        query: User query to process
+        available_tools: List of available tools (with 'server' field)
+        tool_servers: Dict of server name -> server info with 'connection'
+        model: Claude model to use
+        max_tokens: Maximum tokens for response
+        conversation_history: Optional existing conversation history
+        max_tool_calls: Maximum number of tool calls to make (default: 5)
 
     Returns:
         (response_text, updated_conversation_history)
     """
     processor = QueryProcessor(
-        anthropic_client, available_tools, tool_servers, conversation_history
+        anthropic_client, available_tools, tool_servers, conversation_history, max_tool_calls
     )
     response = await processor.process_query(system_prompt, query, model, max_tokens)
     return response, processor.get_conversation_history()
