@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Button, Box, Snackbar } from "@mui/material";
-import { ContentCopy } from "@mui/icons-material";
+import { Button, Box, Snackbar, Switch, FormControlLabel } from "@mui/material";
+import { ContentCopy, Code } from "@mui/icons-material";
 // You'll need to install: npm install react-markdown
 import ReactMarkdown from "react-markdown";
 
@@ -8,6 +8,7 @@ function TextView({ data }) {
   const containerRef = useRef(null);
   const [text, setText] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
+  const [includeToolCalls, setIncludeToolCalls] = useState(false);
 
   // Scroll to bottom whenever data changes
   useEffect(() => {
@@ -17,7 +18,7 @@ function TextView({ data }) {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [data]);
+  }, [data, text]);
 
   // Also scroll when component mounts
   useEffect(() => {
@@ -26,20 +27,61 @@ function TextView({ data }) {
     }
   }, []);
 
-  // When the page loads set the text to be the messages
-  useEffect(() => {
-    let out = "";
-    // Iterate through the data and add each message to the text
-    for (let i = 0; i < data["messages"].length; i++) {
-      var msg = data["messages"][i].content;
-      // If messages begins with "Tool result: [TextContent" then just show the first 50 characters
-      if (msg.startsWith("Tool result:")) {
-        msg = "<tool results>...</tool results>";
+  // Format message content based on its type
+  const formatMessageContent = (content) => {
+    // If content is a string, return it directly
+    if (typeof content === "string") {
+      return content;
+    }
+    
+    // If content is an array (tool calls or results)
+    if (Array.isArray(content)) {
+      const toolUses = content.filter(item => item.type === "tool_use");
+      const toolResults = content.filter(item => item.type === "tool_result");
+      
+      if (toolUses.length > 0) {
+        const tool = toolUses[0];
+        return includeToolCalls 
+          ? `🔧 **Using tool: ${tool.name}**\n\`\`\`json\n${JSON.stringify(tool.input, null, 2)}\n\`\`\``
+          : "_[Tool call omitted]_";
       }
-      out += "**" + data["messages"][i].role + "**:  " + msg + "\n\n";
+      
+      if (toolResults.length > 0) {
+        const result = toolResults[0];
+        if (result.is_error) {
+          return includeToolCalls
+            ? `❌ **Tool Error**\n\`\`\`\n${result.content}\n\`\`\``
+            : "_[Tool error omitted]_";
+        } else {
+          return includeToolCalls
+            ? `✅ **Tool Result**\n\`\`\`\n${result.content}\n\`\`\``
+            : "_[Tool result omitted]_";
+        }
+      }
+    }
+    
+    return "[Unknown content format]";
+  };
+
+  // When the data changes or includeToolCalls changes, update the text
+  useEffect(() => {
+    if (!data || !data.conversation_history) return;
+    
+    let out = "";
+    // Iterate through the conversation history and add each message to the text
+    for (let i = 0; i < data.conversation_history.length; i++) {
+      const message = data.conversation_history[i];
+      
+      // Skip tool messages if not including them
+      if (!includeToolCalls && Array.isArray(message.content)) {
+        continue;
+      }
+      
+      const formattedContent = formatMessageContent(message.content);
+      out += `**${message.role.toUpperCase()}**:  ${formattedContent}\n\n`;
     }
     setText(out);
-  }, [data]);
+  }, [data, includeToolCalls]);
 
   const handleCopyText = async () => {
     try {
@@ -52,6 +94,10 @@ function TextView({ data }) {
 
   const handleCloseSnackbar = () => {
     setCopySuccess(false);
+  };
+
+  const toggleToolCalls = () => {
+    setIncludeToolCalls(!includeToolCalls);
   };
 
   return (
@@ -67,7 +113,7 @@ function TextView({ data }) {
         position: "relative",
       }}
     >
-      {/* Copy Button */}
+      {/* Controls */}
       <Box
         sx={{
           position: "sticky",
@@ -77,9 +123,21 @@ function TextView({ data }) {
           borderBottom: "1px solid #e0e0e0",
           padding: "8px 16px",
           display: "flex",
-          justifyContent: "flex-end",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
+        <FormControlLabel
+          control={
+            <Switch
+              checked={includeToolCalls}
+              onChange={toggleToolCalls}
+              size="small"
+            />
+          }
+          label="Include Tool Calls"
+          sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+        />
         <Button
           variant="outlined"
           size="small"
