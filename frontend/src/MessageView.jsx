@@ -198,6 +198,21 @@ function MessageView({ data }) {
     // Safely get content or use placeholder if missing
     const resultContent = item.content || "[No content available]";
     
+    // Try to parse JSON if the content is a JSON string
+    let formattedContent = resultContent;
+    if (typeof resultContent === 'string') {
+      try {
+        // Check if the string is JSON
+        const parsedJson = JSON.parse(resultContent);
+        formattedContent = JSON.stringify(parsedJson, null, 2);
+      } catch (e) {
+        // Not JSON, use as is
+        formattedContent = resultContent;
+      }
+    } else if (typeof resultContent === 'object') {
+      formattedContent = JSON.stringify(resultContent, null, 2);
+    }
+    
     return (
       <Box sx={{ mt: 1, mb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -232,9 +247,7 @@ function MessageView({ data }) {
               {isError ? "Error:" : "Result:"}
             </Box>
             <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto' }}>
-              {typeof resultContent === 'string' 
-                ? resultContent 
-                : JSON.stringify(resultContent, null, 2)}
+              {formattedContent}
             </pre>
           </Paper>
         </Collapse>
@@ -311,9 +324,11 @@ function MessageView({ data }) {
                         overflow: 'auto'
                       }}
                     >
-                      {typeof item.content === 'string' 
-                        ? item.content 
-                        : JSON.stringify(item.content, null, 2)}
+                      <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto' }}>
+                        {typeof item.content === 'string' 
+                          ? item.content 
+                          : JSON.stringify(item.content, null, 2)}
+                      </pre>
                     </Box>
                   </Box>
                 );

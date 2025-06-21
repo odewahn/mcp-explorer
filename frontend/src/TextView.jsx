@@ -48,15 +48,31 @@ function TextView({ data }) {
       
       if (toolResults.length > 0) {
         const result = toolResults[0];
+        
+        // Format the content properly
+        let formattedContent = result.content;
+        if (typeof result.content === 'string') {
+          try {
+            // Check if the string is JSON
+            const parsedJson = JSON.parse(result.content);
+            formattedContent = JSON.stringify(parsedJson, null, 2);
+          } catch (e) {
+            // Not JSON, use as is
+            formattedContent = result.content;
+          }
+        } else if (typeof result.content === 'object') {
+          formattedContent = JSON.stringify(result.content, null, 2);
+        }
+        
         // Always show tool results, but with different formatting based on includeToolCalls
         if (result.is_error) {
           return includeToolCalls
-            ? `❌ **Tool Error**\n\`\`\`\n${result.content}\n\`\`\``
-            : `❌ **Tool Error**: ${result.content}`;
+            ? `❌ **Tool Error**\n\`\`\`\n${formattedContent}\n\`\`\``
+            : `❌ **Tool Error**: ${formattedContent}`;
         } else {
           return includeToolCalls
-            ? `✅ **Tool Result**\n\`\`\`\n${result.content}\n\`\`\``
-            : `✅ **Tool Result**: ${result.content}`;
+            ? `✅ **Tool Result**\n\`\`\`\n${formattedContent}\n\`\`\``
+            : `✅ **Tool Result**: ${formattedContent}`;
         }
       }
     }
