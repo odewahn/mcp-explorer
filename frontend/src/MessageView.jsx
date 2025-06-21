@@ -170,7 +170,7 @@ function MessageView({ data }) {
             <Box sx={{ fontWeight: 'bold', fontSize: '0.75rem', mb: 0.5 }}>
               Tool Parameters:
             </Box>
-            <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto' }}>
+            <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {JSON.stringify(toolInput, null, 2)}
             </pre>
           </Paper>
@@ -246,7 +246,7 @@ function MessageView({ data }) {
             <Box sx={{ fontWeight: 'bold', fontSize: '0.75rem', mb: 0.5 }}>
               {isError ? "Error:" : "Result:"}
             </Box>
-            <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto' }}>
+            <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {formattedContent}
             </pre>
           </Paper>
@@ -324,7 +324,7 @@ function MessageView({ data }) {
                         overflow: 'auto'
                       }}
                     >
-                      <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto' }}>
+                      <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                         {typeof item.content === 'string' 
                           ? item.content 
                           : JSON.stringify(item.content, null, 2)}

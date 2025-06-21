@@ -63,6 +63,7 @@ function JSONView({ data }) {
           showLineNumbers: true,
           tabSize: 2,
           useWorker: false, // Disable syntax validation worker
+          wrap: true, // Enable text wrapping
         }}
         editorProps={{ $blockScrolling: Infinity }}
         style={{ 
