@@ -1,14 +1,26 @@
-import React, { useEffect, useRef } from "react";
-import {
-  JsonView,
-  allExpanded,
-  darkStyles,
-  defaultStyles,
-} from "react-json-view-lite";
-import "react-json-view-lite/dist/index.css";
+import React, { useEffect, useRef, useState } from "react";
+import AceEditor from "react-ace";
+
+// Import ace modes and themes
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/theme-github";
+import "ace-builds/src-noconflict/ext-language_tools";
 
 function JSONView({ data }) {
   const containerRef = useRef(null);
+  const [formattedJson, setFormattedJson] = useState("");
+
+  // Format the JSON data whenever it changes
+  useEffect(() => {
+    try {
+      // Convert data to a formatted JSON string with 2 spaces indentation
+      const formatted = JSON.stringify(data, null, 2);
+      setFormattedJson(formatted);
+    } catch (error) {
+      console.error("Error formatting JSON:", error);
+      setFormattedJson(JSON.stringify({ error: "Invalid JSON data" }, null, 2));
+    }
+  }, [data]);
 
   // Scroll to bottom whenever data changes
   useEffect(() => {
@@ -22,13 +34,6 @@ function JSONView({ data }) {
     }
   }, [data]);
 
-  // Also scroll when component mounts
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  }, []);
-
   return (
     <div
       ref={containerRef}
@@ -36,28 +41,33 @@ function JSONView({ data }) {
         flexGrow: 1,
         height: "100%",
         overflowY: "auto",
-        padding: "16px",
         backgroundColor: "#f5f5f5",
         border: "1px solid #e0e0e0",
         borderRadius: "4px",
-        scrollBehavior: "auto",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <JsonView
-        data={data}
-        shouldExpandNode={allExpanded}
-        style={{
-          ...defaultStyles,
-          container: "position:relative;",
-          basicChildStyle: "margin-left:1.5rem;",
-          punctuation: "color:#666;",
-          attributeKey: "color:#1976d2;font-weight:500;",
-          attributeValue: "color:#333;",
-          stringValue: "color:#2e7d32;",
-          numberValue: "color:#d32f2f;",
-          booleanValue: "color:#7b1fa2;",
-          nullValue: "color:#999;",
+      <AceEditor
+        mode="json"
+        theme="github"
+        name="json-viewer"
+        value={formattedJson}
+        readOnly={true}
+        width="100%"
+        height="100%"
+        showPrintMargin={false}
+        showGutter={true}
+        highlightActiveLine={false}
+        setOptions={{
+          showLineNumbers: true,
+          tabSize: 2,
+          useWorker: false, // Disable syntax validation worker
+        }}
+        editorProps={{ $blockScrolling: Infinity }}
+        style={{ 
+          fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace",
+          fontSize: "14px"
         }}
       />
     </div>
