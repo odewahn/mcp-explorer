@@ -240,7 +240,7 @@ class ResponseProcessor:
                 elif content_item.type == "tool_use":
                     new_tool_calls.append(content_item)
             
-            # If no more tool calls or we've reached the limit, break the loop
+            # If no more tool calls, break the loop
             if not new_tool_calls:
                 # If there's text content, add it as the final response
                 if has_text_content:
@@ -250,16 +250,30 @@ class ResponseProcessor:
                     return final_text
                 break
                 
+            # If we're about to hit the max tool calls limit with this batch, 
+            # add a message to inform Claude that it's the last batch
+            remaining_calls = self.max_tool_calls - self.tool_call_count
+            if remaining_calls <= len(new_tool_calls):
+                # Truncate the list to only include what we can process
+                new_tool_calls = new_tool_calls[:remaining_calls]
+                
             # Process the new tool calls
             for tool_call in new_tool_calls:
                 await self._process_single_tool_call(tool_call)
                 self.tool_call_count += 1
                 
-                # If we've reached the maximum number of tool calls, break
+                # If we've reached the maximum number of tool calls, break but ensure we get a final response
                 if self.tool_call_count >= self.max_tool_calls:
                     break
         
         # After all tool calls are complete, get Claude's final response
+        # If we hit the max_tool_calls limit, make sure to request a summary of findings
+        if self.tool_call_count >= self.max_tool_calls:
+            # Add a message to prompt Claude to summarize the findings
+            self.conversation_manager.add_user_message(
+                "I've reached the maximum number of tool calls. Please summarize all the information you've gathered so far."
+            )
+            
         final_response = await self._get_final_response(
             anthropic_client, system_prompt, model, max_tokens
         )
@@ -437,13 +451,23 @@ class QueryProcessor:
         # Add user message to conversation
         self.conversation_manager.add_user_message(query)
 
+        # Enhance system prompt with information about tool call limits
+        enhanced_system_prompt = system_prompt
+        if not "tool call limit" in system_prompt.lower():
+            enhanced_system_prompt = (
+                f"{system_prompt}\n\n"
+                f"You can make up to {self.response_processor.max_tool_calls} tool calls. "
+                f"If you reach this limit, make sure to provide a complete summary of all information gathered "
+                f"from the tool calls you've made so far."
+            )
+
         # Prepare tools for API call
         clean_tools = self.tool_manager.clean_tools_for_api()
 
         # Make initial API call
         try:
             response = await self._make_initial_api_call(
-                system_prompt, model, clean_tools, max_tokens
+                enhanced_system_prompt, model, clean_tools, max_tokens
             )
         except Exception as e:
             logger.error(f"ERROR in Anthropic API call: {str(e)}")
@@ -451,7 +475,7 @@ class QueryProcessor:
 
         # Process the complete response (including any tool calls)
         final_response = await self.response_processor.process_response(
-            response, self.anthropic, system_prompt, model, max_tokens
+            response, self.anthropic, enhanced_system_prompt, model, max_tokens
         )
 
         return final_response
