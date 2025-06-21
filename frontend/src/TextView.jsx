@@ -63,14 +63,31 @@ function TextView({ data }) {
     return "[Unknown content format]";
   };
 
+  // Determine which messages array to use (support both old and new API formats)
+  const getMessagesArray = () => {
+    if (data?.conversation_history && Array.isArray(data.conversation_history)) {
+      return data.conversation_history;
+    } else if (data?.messages && Array.isArray(data.messages)) {
+      // Backward compatibility with old format
+      return data.messages;
+    }
+    return [];
+  };
+
   // When the data changes or includeToolCalls changes, update the text
   useEffect(() => {
-    if (!data || !data.conversation_history) return;
+    console.log("TextView received data:", data);
+    
+    const messages = getMessagesArray();
+    if (!messages.length) {
+      setText("No messages to display. Start a conversation!");
+      return;
+    }
     
     let out = "";
-    // Iterate through the conversation history and add each message to the text
-    for (let i = 0; i < data.conversation_history.length; i++) {
-      const message = data.conversation_history[i];
+    // Iterate through the messages and add each one to the text
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
       
       // Skip tool messages if not including them
       if (!includeToolCalls && Array.isArray(message.content)) {

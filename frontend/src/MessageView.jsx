@@ -27,6 +27,9 @@ function MessageView({ data }) {
 
   // Scroll to bottom when data changes (only if new data is added)
   useEffect(() => {
+    // Log data for debugging
+    console.log("MessageView received data:", data);
+    
     // Skip first render to avoid initial animation
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -152,9 +155,9 @@ function MessageView({ data }) {
               overflow: 'auto'
             }}
           >
-            <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
+            <Box sx={{ fontWeight: 'bold', fontSize: '0.75rem', mb: 0.5 }}>
               Tool Parameters:
-            </Typography>
+            </Box>
             <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto' }}>
               {JSON.stringify(item.input, null, 2)}
             </pre>
@@ -198,9 +201,9 @@ function MessageView({ data }) {
               overflow: 'auto'
             }}
           >
-            <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
+            <Box sx={{ fontWeight: 'bold', fontSize: '0.75rem', mb: 0.5 }}>
               {item.is_error ? "Error:" : "Result:"}
-            </Typography>
+            </Box>
             <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto' }}>
               {item.content}
             </pre>
@@ -268,6 +271,19 @@ function MessageView({ data }) {
     return true;
   };
 
+  // Determine which messages array to use (support both old and new API formats)
+  const getMessagesArray = () => {
+    if (data?.conversation_history && Array.isArray(data.conversation_history)) {
+      return data.conversation_history;
+    } else if (data?.messages && Array.isArray(data.messages)) {
+      // Backward compatibility with old format
+      return data.messages;
+    }
+    return [];
+  };
+
+  const messages = getMessagesArray();
+
   return (
     <Box
       sx={{
@@ -311,9 +327,8 @@ function MessageView({ data }) {
           gap: 2,
         }}
       >
-        {data &&
-          data.conversation_history &&
-          data.conversation_history.map((message, index) => (
+        {messages.length > 0 ? (
+          messages.map((message, index) => (
             shouldDisplayMessage(message) && (
               <Paper
                 key={index}
@@ -351,7 +366,12 @@ function MessageView({ data }) {
                 {renderMessageContent(message, index)}
               </Paper>
             )
-          ))}
+          ))
+        ) : (
+          <Box sx={{ textAlign: 'center', color: '#666', p: 4 }}>
+            No messages to display. Start a conversation!
+          </Box>
+        )}
       </Box>
     </Box>
   );
