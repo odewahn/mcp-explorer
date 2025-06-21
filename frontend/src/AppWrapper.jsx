@@ -121,7 +121,15 @@ function AppWrapper() {
             </Box>
           </Toolbar>
         </AppBar>
-        <Container sx={{ mt: 2, pb: 2, flexGrow: 1, overflow: 'auto' }}>
+        <Container sx={{ 
+          mt: 2, 
+          pb: 2, 
+          flexGrow: 1, 
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden', // Prevent container from scrolling
+          height: 'calc(100% - 64px)' // Subtract AppBar height
+        }}>
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/static/" element={<App />} />

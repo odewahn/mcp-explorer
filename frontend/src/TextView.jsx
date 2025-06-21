@@ -141,6 +141,7 @@ function TextView({ data }) {
         border: "1px solid #e0e0e0",
         borderRadius: "4px",
         position: "relative",
+        overflow: "hidden", // Prevent outer container from scrolling
       }}
     >
       {/* Controls */}

@@ -46,6 +46,7 @@ function JSONView({ data }) {
         borderRadius: "4px",
         display: "flex",
         flexDirection: "column",
+        minHeight: 0, // Important for proper flexbox behavior
       }}
     >
       <AceEditor

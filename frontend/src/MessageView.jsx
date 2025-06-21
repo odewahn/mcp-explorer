@@ -400,6 +400,7 @@ function MessageView({ data }) {
         display: "flex",
         flexDirection: "column",
         height: "100%",
+        overflow: "hidden", // Prevent outer container from scrolling
       }}
     >
       <Box
@@ -435,6 +436,7 @@ function MessageView({ data }) {
           display: "flex",
           flexDirection: "column",
           gap: 2,
+          minHeight: 0, // Important for proper flexbox behavior
         }}
       >
         {messages.length > 0 ? (

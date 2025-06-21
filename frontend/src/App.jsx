@@ -46,70 +46,98 @@ function App() {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <SystemPrompt onSystemPromptChange={handleSystemPromptChange} />
-
-      <Box
-        sx={{
-          borderBottom: 1,
-          borderColor: "#e0e0e0",
-          mb: 2,
-          backgroundColor: "#ffffff",
-          borderRadius: "4px 4px 0 0",
-          px: 2,
-        }}
-      >
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          aria-label="view tabs"
-          sx={{
-            "& .MuiTabs-indicator": {
-              backgroundColor: "#1976d2",
-              height: 3,
-            },
-          }}
-        >
-          <Tab
-            label="Message View"
-            sx={{
-              textTransform: "none",
-              fontWeight: 500,
-              fontSize: "0.9rem",
-            }}
-          />
-          <Tab
-            label="JSON View"
-            sx={{
-              textTransform: "none",
-              fontWeight: 500,
-              fontSize: "0.9rem",
-            }}
-          />
-          <Tab
-            label="Text View"
-            sx={{
-              textTransform: "none",
-              fontWeight: 500,
-              fontSize: "0.9rem",
-            }}
-          />
-        </Tabs>
+    <Box sx={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      height: "100%",
+    }}>
+      {/* System Prompt - Fixed at top */}
+      <Box sx={{ flexShrink: 0 }}>
+        <SystemPrompt onSystemPromptChange={handleSystemPromptChange} />
       </Box>
 
-      {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", my: 10 }}>
-          <CircularProgress />
+      {/* Tabs and Content Area - Fixed height with scrolling */}
+      <Box sx={{ 
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        minHeight: 0, // Important for proper flexbox behavior
+        overflow: "hidden" // Prevent outer container from scrolling
+      }}>
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: "#e0e0e0",
+            backgroundColor: "#ffffff",
+            borderRadius: "4px 4px 0 0",
+            px: 2,
+            flexShrink: 0, // Prevent tabs from shrinking
+          }}
+        >
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="view tabs"
+            sx={{
+              "& .MuiTabs-indicator": {
+                backgroundColor: "#1976d2",
+                height: 3,
+              },
+            }}
+          >
+            <Tab
+              label="Message View"
+              sx={{
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "0.9rem",
+              }}
+            />
+            <Tab
+              label="JSON View"
+              sx={{
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "0.9rem",
+              }}
+            />
+            <Tab
+              label="Text View"
+              sx={{
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "0.9rem",
+              }}
+            />
+          </Tabs>
         </Box>
-      ) : (
-        <>
-          {tabValue === 0 && <MessageView data={messages} />}
-          {tabValue === 1 && <JSONView data={messages} />}
-          {tabValue === 2 && <TextView data={messages} />}
-        </>
-      )}
 
-      <InputMessage onNewMessage={loadMessages} systemPrompt={systemPrompt} />
+        {/* Content area with fixed height and scrolling */}
+        <Box sx={{ 
+          flexGrow: 1,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0 // Important for proper flexbox behavior
+        }}>
+          {loading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <>
+              {tabValue === 0 && <MessageView data={messages} />}
+              {tabValue === 1 && <JSONView data={messages} />}
+              {tabValue === 2 && <TextView data={messages} />}
+            </>
+          )}
+        </Box>
+      </Box>
+
+      {/* Input Message - Fixed at bottom */}
+      <Box sx={{ flexShrink: 0, mt: 2 }}>
+        <InputMessage onNewMessage={loadMessages} systemPrompt={systemPrompt} />
+      </Box>
     </Box>
   );
 }
