@@ -22,7 +22,8 @@ function MessageView({ data }) {
   const isFirstRender = useRef(true);
   const prevDataLength = useRef(0);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
-  const [showToolCalls, setShowToolCalls] = useState(false);
+  // Always show tool calls
+  const showToolCalls = true;
   const [expandedTools, setExpandedTools] = useState({});
 
   // Scroll to bottom when data changes (only if new data is added)
@@ -403,25 +404,6 @@ function MessageView({ data }) {
         overflow: "hidden", // Prevent outer container from scrolling
       }}
     >
-      <Box
-        sx={{
-          p: 1,
-          borderBottom: "1px solid #e0e0e0",
-          backgroundColor: "#f5f5f5",
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
-        <Button
-          size="small"
-          variant={showToolCalls ? "contained" : "outlined"}
-          onClick={() => setShowToolCalls(!showToolCalls)}
-          startIcon={<CodeIcon />}
-          sx={{ fontSize: "0.75rem" }}
-        >
-          {showToolCalls ? "Hide Tool Calls" : "Show Tool Calls"}
-        </Button>
-      </Box>
       
       <Box
         ref={containerRef}
