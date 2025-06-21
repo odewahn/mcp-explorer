@@ -17,6 +17,8 @@ import uvicorn
 import os
 import webbrowser
 
+MAX_TOKENS = 8192  # Maximum tokens for Claude API calls
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -163,7 +165,7 @@ class MCPClient:
             response = self.anthropic.messages.create(
                 model=model,
                 system=system_prompt,
-                max_tokens=1000,
+                max_tokens=MAX_TOKENS,
                 messages=messages,
                 tools=clean_tools,
             )
@@ -237,7 +239,7 @@ class MCPClient:
                     response = self.anthropic.messages.create(
                         model=model,
                         system=system_prompt,
-                        max_tokens=1000,
+                        max_tokens=MAX_TOKENS,
                         messages=messages,
                     )
 
