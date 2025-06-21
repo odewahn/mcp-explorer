@@ -8,6 +8,7 @@ class Query(BaseModel):
     system_prompt: str = (
         "You are Claude, an AI assistant. Be helpful, harmless, and honest."
     )
+    max_tool_calls: int = 5
 
 
 class MessageResponse(BaseModel):
