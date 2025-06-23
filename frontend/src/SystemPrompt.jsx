@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Typography, Box, Paper } from "@mui/material";
+import { Typography, Box, Paper, Container, Snackbar, Alert } from "@mui/material";
 import AceEditor from "react-ace";
 
 // Import ace modes and themes
@@ -8,12 +8,14 @@ import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
 
-function SystemPrompt({ onSystemPromptChange }) {
+function SystemPrompt({ onSystemPromptChange = () => {} }) {
   const [systemPrompt, setSystemPrompt] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Save system prompt to localStorage
   const saveSystemPrompt = useCallback((prompt) => {
     localStorage.setItem('systemPrompt', prompt);
+    setSaveSuccess(true);
   }, []);
 
   // Load the initial system prompt when component mounts
@@ -46,30 +48,41 @@ function SystemPrompt({ onSystemPromptChange }) {
     }
   };
 
+  const handleCloseSnackbar = () => {
+    setSaveSuccess(false);
+  };
+
   return (
-    <Box sx={{ mb: 3, mt: 1 }}>
+    <Container maxWidth="lg" sx={{ py: 3, height: '100%' }}>
       <Paper 
         variant="outlined" 
         sx={{ 
-          p: 1, 
+          p: 3, 
           backgroundColor: '#ffffff',
           border: '1px solid #e0e0e0',
           borderRadius: '4px',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+          height: 'auto'
         }}
       >
         <Typography 
-          variant="subtitle2" 
+          variant="h5" 
           sx={{ 
-            pl: 1, 
-            pb: 0.5, 
-            color: '#666666',
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center'
+            mb: 2, 
+            color: '#333333',
+            fontWeight: 500
           }}
         >
           System Prompt
+        </Typography>
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            mb: 3, 
+            color: '#666666'
+          }}
+        >
+          The system prompt provides initial instructions to the AI. It helps set the context and behavior for the conversation.
         </Typography>
         <AceEditor
           mode="text"
@@ -78,7 +91,7 @@ function SystemPrompt({ onSystemPromptChange }) {
           onChange={handleChange}
           value={systemPrompt}
           width="100%"
-          height="100px"
+          height="300px"
           fontSize={14}
           showPrintMargin={false}
           showGutter={true}
@@ -98,7 +111,17 @@ function SystemPrompt({ onSystemPromptChange }) {
           }}
         />
       </Paper>
-    </Box>
+      <Snackbar
+        open={saveSuccess}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+          System prompt saved successfully!
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 }
 

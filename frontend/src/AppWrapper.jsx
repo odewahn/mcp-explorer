@@ -13,11 +13,14 @@ import {
   Button,
   Box,
   Container,
+  Tooltip,
 } from "@mui/material";
 import ChatIcon from "@mui/icons-material/Chat";
 import BuildIcon from "@mui/icons-material/Build";
+import SettingsIcon from "@mui/icons-material/Settings";
 import App from "./App";
 import Tools from "./Tools";
+import SystemPrompt from "./SystemPrompt";
 
 // Helper component to handle route changes
 function RouteObserver({ setActivePage }) {
@@ -30,6 +33,8 @@ function RouteObserver({ setActivePage }) {
       setActivePage("chat");
     } else if (path === "/tools") {
       setActivePage("tools");
+    } else if (path === "/system-prompt") {
+      setActivePage("system-prompt");
     }
   }, [location, setActivePage]);
 
@@ -40,6 +45,8 @@ function RouteObserver({ setActivePage }) {
       setActivePage("chat");
     } else if (path === "/tools") {
       setActivePage("tools");
+    } else if (path === "/system-prompt") {
+      setActivePage("system-prompt");
     }
   }, [setActivePage]);
 
@@ -51,9 +58,11 @@ function AppWrapper() {
   const [activePage, setActivePage] = useState(() => {
     // Get the initial path from window.location
     const path = window.location.pathname;
-    // Handle both /static/ and /tools paths
+    // Handle paths
     if (path === '/tools') {
       return 'tools';
+    } else if (path === '/system-prompt') {
+      return 'system-prompt';
     } else if (path === '/static/' || path === '/') {
       return 'chat';
     } else {
@@ -118,6 +127,30 @@ function AppWrapper() {
               >
                 Tools
               </Button>
+              <Tooltip title="Edit System Prompt">
+                <Button
+                  color="inherit"
+                  component={Link}
+                  to="/system-prompt"
+                  startIcon={<SettingsIcon />}
+                  sx={{
+                    backgroundColor:
+                      activePage === "system-prompt"
+                        ? "rgba(255, 255, 255, 0.15)"
+                        : "transparent",
+                    borderRadius: '4px',
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    padding: '8px 16px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                    }
+                  }}
+                  onClick={() => setActivePage("system-prompt")}
+                >
+                  System Prompt
+                </Button>
+              </Tooltip>
             </Box>
           </Toolbar>
         </AppBar>
@@ -134,6 +167,7 @@ function AppWrapper() {
             <Route path="/" element={<App />} />
             <Route path="/static/" element={<App />} />
             <Route path="/tools" element={<Tools />} />
+            <Route path="/system-prompt" element={<SystemPrompt />} />
           </Routes>
         </Container>
       </Box>
