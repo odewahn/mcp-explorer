@@ -39,7 +39,7 @@ function MessageView({ data }) {
   useEffect(() => {
     // Log data for debugging
     console.log("MessageView received data:", data);
-    
+
     // Skip first render to avoid initial animation
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -75,10 +75,9 @@ function MessageView({ data }) {
   // Function to copy raw message content to clipboard
   const copyRawToClipboard = (content, index) => {
     // If content is an array, stringify it
-    const textToCopy = typeof content === "string" 
-      ? content 
-      : JSON.stringify(content, null, 2);
-      
+    const textToCopy =
+      typeof content === "string" ? content : JSON.stringify(content, null, 2);
+
     navigator.clipboard.writeText(textToCopy).then(
       () => {
         // Show copied indicator
@@ -95,6 +94,7 @@ function MessageView({ data }) {
   };
 
   // Function to copy formatted message content for Google Docs
+  /*
   const copyFormattedToClipboard = (content, index) => {
     try {
       // If content is not a string, stringify it
@@ -135,12 +135,65 @@ function MessageView({ data }) {
       console.error("Could not copy formatted text: ", err);
     }
   };
+  */
+  // Function to copy formatted message content for Google Docs
+  const copyFormattedToClipboard = (content, index) => {
+    try {
+      // If content is not a string, stringify it
+      const textToFormat =
+        typeof content === "string"
+          ? content
+          : JSON.stringify(content, null, 2);
+
+      // Convert to HTML
+      let html = marked(textToFormat);
+
+      // Remove common styling that causes grey backgrounds in Google Docs
+      html = html.replace(
+        /<code[^>]*>/g,
+        '<code style="background: none; background-color: transparent;">'
+      );
+      html = html.replace(
+        /<pre[^>]*>/g,
+        '<pre style="background: none; background-color: transparent;">'
+      );
+
+      // Create a temporary element to hold the HTML
+      const tempElement = document.createElement("div");
+      tempElement.innerHTML = html;
+      document.body.appendChild(tempElement);
+
+      // Select the content
+      const range = document.createRange();
+      range.selectNodeContents(tempElement);
+
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      // Execute copy command
+      document.execCommand("copy");
+
+      // Clean up
+      selection.removeAllRanges();
+      document.body.removeChild(tempElement);
+
+      // Show copied indicator
+      setCopiedMessageId(index);
+      setCopyMessage("Formatted text copied for Google Docs");
+      // Hide after 2 seconds
+      setTimeout(() => setCopiedMessageId(null), 2000);
+      closeCopyMenu();
+    } catch (err) {
+      console.error("Could not copy formatted text: ", err);
+    }
+  };
 
   // Toggle expanded state for a specific tool
   const toggleToolExpand = (index) => {
-    setExpandedTools(prev => ({
+    setExpandedTools((prev) => ({
       ...prev,
-      [index]: !prev[index]
+      [index]: !prev[index],
     }));
   };
 
@@ -152,52 +205,60 @@ function MessageView({ data }) {
   // Render tool use content
   const renderToolUse = (item, messageIndex) => {
     const isExpanded = expandedTools[messageIndex] || false;
-    
+
     // Safety check for required properties
     if (!item || !item.name) {
       return (
-        <Box sx={{ mt: 1, mb: 1, color: 'error.main' }}>
+        <Box sx={{ mt: 1, mb: 1, color: "error.main" }}>
           Invalid tool call data
         </Box>
       );
     }
-    
+
     // Safely get input or use empty object if missing
     const toolInput = item.input || {};
-    
+
     return (
       <Box sx={{ mt: 1, mb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Chip 
-            icon={<CodeIcon />} 
-            label={`Tool: ${item.name}`} 
-            color="primary" 
-            variant="outlined" 
+        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+          <Chip
+            icon={<CodeIcon />}
+            label={`Tool: ${item.name}`}
+            color="primary"
+            variant="outlined"
             size="small"
             sx={{ mr: 1 }}
           />
-          <IconButton 
-            size="small" 
+          <IconButton
+            size="small"
             onClick={() => toggleToolExpand(messageIndex)}
             aria-label={isExpanded ? "Collapse" : "Expand"}
           >
             {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         </Box>
-        
+
         <Collapse in={isExpanded}>
-          <Paper 
-            variant="outlined" 
-            sx={{ 
+          <Paper
+            variant="outlined"
+            sx={{
               p: 1.5,
-              maxHeight: '200px',
-              overflow: 'auto'
+              maxHeight: "200px",
+              overflow: "auto",
             }}
           >
-            <Box sx={{ fontWeight: 'bold', fontSize: '0.75rem', mb: 0.5 }}>
+            <Box sx={{ fontWeight: "bold", fontSize: "0.75rem", mb: 0.5 }}>
               Tool Parameters:
             </Box>
-            <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            <pre
+              style={{
+                margin: 0,
+                fontSize: "0.8rem",
+                overflow: "auto",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}
+            >
               {JSON.stringify(toolInput, null, 2)}
             </pre>
           </Paper>
@@ -209,25 +270,25 @@ function MessageView({ data }) {
   // Render tool result content
   const renderToolResult = (item, messageIndex) => {
     const isExpanded = expandedTools[messageIndex] || false;
-    
+
     // Safety check for required properties
     if (!item) {
       return (
-        <Box sx={{ mt: 1, mb: 1, color: 'error.main' }}>
+        <Box sx={{ mt: 1, mb: 1, color: "error.main" }}>
           Invalid tool result data
         </Box>
       );
     }
-    
+
     // Safely determine if there's an error
     const isError = Boolean(item.is_error);
-    
+
     // Safely get content or use placeholder if missing
     const resultContent = item.content || "[No content available]";
-    
+
     // Try to parse JSON if the content is a JSON string
     let formattedContent = resultContent;
-    if (typeof resultContent === 'string') {
+    if (typeof resultContent === "string") {
       try {
         // Check if the string is JSON
         const parsedJson = JSON.parse(resultContent);
@@ -236,43 +297,51 @@ function MessageView({ data }) {
         // Not JSON, use as is
         formattedContent = resultContent;
       }
-    } else if (typeof resultContent === 'object') {
+    } else if (typeof resultContent === "object") {
       formattedContent = JSON.stringify(resultContent, null, 2);
     }
-    
+
     return (
       <Box sx={{ mt: 1, mb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Chip 
-            icon={isError ? <ErrorIcon /> : <CheckCircleIcon />} 
-            label={isError ? "Tool Error" : "Tool Result"} 
-            color={isError ? "error" : "success"} 
-            variant="outlined" 
+        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+          <Chip
+            icon={isError ? <ErrorIcon /> : <CheckCircleIcon />}
+            label={isError ? "Tool Error" : "Tool Result"}
+            color={isError ? "error" : "success"}
+            variant="outlined"
             size="small"
             sx={{ mr: 1 }}
           />
-          <IconButton 
-            size="small" 
+          <IconButton
+            size="small"
             onClick={() => toggleToolExpand(messageIndex)}
             aria-label={isExpanded ? "Collapse" : "Expand"}
           >
             {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         </Box>
-        
+
         <Collapse in={isExpanded}>
-          <Paper 
-            variant="outlined" 
-            sx={{ 
+          <Paper
+            variant="outlined"
+            sx={{
               p: 1.5,
-              maxHeight: '200px',
-              overflow: 'auto'
+              maxHeight: "200px",
+              overflow: "auto",
             }}
           >
-            <Box sx={{ fontWeight: 'bold', fontSize: '0.75rem', mb: 0.5 }}>
+            <Box sx={{ fontWeight: "bold", fontSize: "0.75rem", mb: 0.5 }}>
               {isError ? "Error:" : "Result:"}
             </Box>
-            <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            <pre
+              style={{
+                margin: 0,
+                fontSize: "0.8rem",
+                overflow: "auto",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}
+            >
               {formattedContent}
             </pre>
           </Paper>
@@ -298,7 +367,7 @@ function MessageView({ data }) {
         </Typography>
       );
     }
-    
+
     // If content is an array (tool calls or results)
     if (Array.isArray(message.content)) {
       return (
@@ -310,11 +379,11 @@ function MessageView({ data }) {
               if (!showToolCalls) {
                 return (
                   <Box key={itemIndex} sx={{ mt: 1, mb: 1 }}>
-                    <Chip 
-                      icon={<CodeIcon />} 
+                    <Chip
+                      icon={<CodeIcon />}
                       label={`Tool Call: ${item.name}`}
-                      color="primary" 
-                      variant="outlined" 
+                      color="primary"
+                      variant="outlined"
                       size="small"
                     />
                   </Box>
@@ -322,52 +391,60 @@ function MessageView({ data }) {
               }
               return renderToolUse(item, `${index}-${itemIndex}`);
             }
-            
+
             if (item.type === "tool_result") {
               // Always show a basic summary of tool results
               const isError = Boolean(item.is_error);
-              
+
               if (!showToolCalls) {
                 // Show a simple summary with the result content
                 return (
                   <Box key={itemIndex} sx={{ mt: 1, mb: 1 }}>
-                    <Chip 
+                    <Chip
                       icon={isError ? <ErrorIcon /> : <CheckCircleIcon />}
                       label={isError ? "Tool Error" : "Tool Result"}
                       color={isError ? "error" : "success"}
-                      variant="outlined" 
+                      variant="outlined"
                       size="small"
                       sx={{ mb: 1 }}
                     />
-                    <Box 
-                      sx={{ 
+                    <Box
+                      sx={{
                         pl: 1,
-                        fontSize: '0.9rem',
+                        fontSize: "0.9rem",
                         whiteSpace: "pre-wrap",
                         wordBreak: "break-word",
-                        maxHeight: '100px',
-                        overflow: 'auto'
+                        maxHeight: "100px",
+                        overflow: "auto",
                       }}
                     >
-                      <pre style={{ margin: 0, fontSize: '0.8rem', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {typeof item.content === 'string' 
-                          ? item.content 
+                      <pre
+                        style={{
+                          margin: 0,
+                          fontSize: "0.8rem",
+                          overflow: "auto",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {typeof item.content === "string"
+                          ? item.content
                           : JSON.stringify(item.content, null, 2)}
                       </pre>
                     </Box>
                   </Box>
                 );
               }
-              
+
               return renderToolResult(item, `${index}-${itemIndex}`);
             }
-            
+
             return null;
           })}
         </Box>
       );
     }
-    
+
     // Handle case where content is an object but not an array
     if (typeof message.content === "object") {
       return (
@@ -376,7 +453,7 @@ function MessageView({ data }) {
         </Typography>
       );
     }
-    
+
     // Fallback for unknown content type
     return (
       <Typography variant="body2" color="text.secondary">
@@ -391,13 +468,13 @@ function MessageView({ data }) {
     if (typeof message.content === "string") {
       return true;
     }
-    
+
     // For tool messages, check if they should be shown
     if (Array.isArray(message.content)) {
       // If not showing tool calls and all content items are tool-related, skip the message
       if (!showToolCalls) {
         const allToolRelated = message.content.every(
-          item => item.type === "tool_use" || item.type === "tool_result"
+          (item) => item.type === "tool_use" || item.type === "tool_result"
         );
         if (allToolRelated) {
           return false;
@@ -405,18 +482,21 @@ function MessageView({ data }) {
       }
       return true;
     }
-    
+
     // For other object types, always show but content will be handled in renderMessageContent
     if (typeof message.content === "object") {
       return true;
     }
-    
+
     return true;
   };
 
   // Determine which messages array to use (support both old and new API formats)
   const getMessagesArray = () => {
-    if (data?.conversation_history && Array.isArray(data.conversation_history)) {
+    if (
+      data?.conversation_history &&
+      Array.isArray(data.conversation_history)
+    ) {
       return data.conversation_history;
     } else if (data?.messages && Array.isArray(data.messages)) {
       // Backward compatibility with old format
@@ -437,7 +517,6 @@ function MessageView({ data }) {
         backgroundColor: "#ffffff",
       }}
     >
-      
       {/* Controls */}
       <Box
         sx={{
@@ -458,10 +537,10 @@ function MessageView({ data }) {
             />
           }
           label="Show Tool Calls"
-          sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+          sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.875rem" } }}
         />
       </Box>
-      
+
       <Box
         ref={containerRef}
         sx={{
@@ -479,50 +558,57 @@ function MessageView({ data }) {
         }}
       >
         {messages.length > 0 ? (
-          messages.map((message, index) => (
-            shouldDisplayMessage(message) && (
-              <Paper
-                key={index}
-                elevation={1}
-                sx={{
-                  padding: 2,
-                  border: "1px solid #e0e0e0",
-                  marginBottom: 1,
-                }}
-              >
-                <Box
+          messages.map(
+            (message, index) =>
+              shouldDisplayMessage(message) && (
+                <Paper
+                  key={index}
+                  elevation={1}
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    padding: 2,
+                    border: "1px solid #e0e0e0",
+                    marginBottom: 1,
                   }}
                 >
-                  <Typography variant="subtitle2" color="text.secondary">
-                    {message.role.toUpperCase()}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {copiedMessageId === index && (
-                      <Typography variant="caption" color="success.main" sx={{ mr: 1 }}>
-                        {copyMessage}
-                      </Typography>
-                    )}
-                    <IconButton
-                      size="small"
-                      onClick={(event) => openCopyMenu(event, index)}
-                      color={copiedMessageId === index ? "success" : "default"}
-                      aria-label="Copy options"
-                    >
-                      <ContentCopyIcon fontSize="small" />
-                    </IconButton>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Typography variant="subtitle2" color="text.secondary">
+                      {message.role.toUpperCase()}
+                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      {copiedMessageId === index && (
+                        <Typography
+                          variant="caption"
+                          color="success.main"
+                          sx={{ mr: 1 }}
+                        >
+                          {copyMessage}
+                        </Typography>
+                      )}
+                      <IconButton
+                        size="small"
+                        onClick={(event) => openCopyMenu(event, index)}
+                        color={
+                          copiedMessageId === index ? "success" : "default"
+                        }
+                        aria-label="Copy options"
+                      >
+                        <ContentCopyIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </Box>
-                </Box>
-                <Divider sx={{ mb: 1 }} />
-                {renderMessageContent(message, index)}
-              </Paper>
-            )
-          ))
+                  <Divider sx={{ mb: 1 }} />
+                  {renderMessageContent(message, index)}
+                </Paper>
+              )
+          )
         ) : (
-          <Box sx={{ textAlign: 'center', color: '#666', p: 4 }}>
+          <Box sx={{ textAlign: "center", color: "#666", p: 4 }}>
             No messages to display. Start a conversation!
           </Box>
         )}
@@ -534,16 +620,26 @@ function MessageView({ data }) {
         open={Boolean(menuAnchorEl)}
         onClose={closeCopyMenu}
       >
-        <MenuItem 
-          onClick={() => selectedMessageIndex !== null && 
-            copyRawToClipboard(messages[selectedMessageIndex].content, selectedMessageIndex)}
+        <MenuItem
+          onClick={() =>
+            selectedMessageIndex !== null &&
+            copyRawToClipboard(
+              messages[selectedMessageIndex].content,
+              selectedMessageIndex
+            )
+          }
         >
           <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
           Copy Raw Text
         </MenuItem>
-        <MenuItem 
-          onClick={() => selectedMessageIndex !== null && 
-            copyFormattedToClipboard(messages[selectedMessageIndex].content, selectedMessageIndex)}
+        <MenuItem
+          onClick={() =>
+            selectedMessageIndex !== null &&
+            copyFormattedToClipboard(
+              messages[selectedMessageIndex].content,
+              selectedMessageIndex
+            )
+          }
         >
           <FormatBoldIcon fontSize="small" sx={{ mr: 1 }} />
           Copy Formatted for Google Docs
