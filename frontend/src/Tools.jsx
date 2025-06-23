@@ -34,7 +34,7 @@ import {
   FormHelperText,
 } from "@mui/material";
 import DOMPurify from "dompurify";
-import "showdown";
+import showdown from "showdown";
 import BuildIcon from "@mui/icons-material/Build";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -420,7 +420,7 @@ function Tools() {
                                 dangerouslySetInnerHTML={{ 
                                   __html: DOMPurify.sanitize(
                                     // Convert markdown to HTML
-                                    new window.showdown.Converter().makeHtml(tool.description || "")
+                                    new showdown.Converter().makeHtml(tool.description || "")
                                   )
                                 }}
                               />
