@@ -8,7 +8,7 @@ function TextView({ data }) {
   const containerRef = useRef(null);
   const [text, setText] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
-  const [includeToolCalls, setIncludeToolCalls] = useState(false);
+  const [showToolCalls, setShowToolCalls] = useState(false);
 
   // Scroll to bottom whenever data changes
   useEffect(() => {
@@ -40,10 +40,13 @@ function TextView({ data }) {
       const toolResults = content.filter(item => item.type === "tool_result");
       
       if (toolUses.length > 0) {
+        // Skip tool_use content entirely when showToolCalls is false
+        if (!showToolCalls) {
+          return null; // Return null to indicate this message should be skipped
+        }
+        
         const tool = toolUses[0];
-        return includeToolCalls 
-          ? `🔧 **Using tool: ${tool.name}**\n\`\`\`json\n${JSON.stringify(tool.input, null, 2)}\n\`\`\``
-          : `🔧 _Using tool: ${tool.name}_`;
+        return `🔧 **Using tool: ${tool.name}**\n\`\`\`json\n${JSON.stringify(tool.input, null, 2)}\n\`\`\``;
       }
       
       if (toolResults.length > 0) {
@@ -64,13 +67,13 @@ function TextView({ data }) {
           formattedContent = JSON.stringify(result.content, null, 2);
         }
         
-        // Always show tool results, but with different formatting based on includeToolCalls
+        // Always show tool results, but with different formatting based on showToolCalls
         if (result.is_error) {
-          return includeToolCalls
+          return showToolCalls
             ? `❌ **Tool Error**\n\`\`\`\n${formattedContent}\n\`\`\``
             : `❌ **Tool Error**: ${formattedContent}`;
         } else {
-          return includeToolCalls
+          return showToolCalls
             ? `✅ **Tool Result**\n\`\`\`\n${formattedContent}\n\`\`\``
             : `✅ **Tool Result**: ${formattedContent}`;
         }
@@ -91,7 +94,7 @@ function TextView({ data }) {
     return [];
   };
 
-  // When the data changes or includeToolCalls changes, update the text
+  // When the data changes or showToolCalls changes, update the text
   useEffect(() => {
     console.log("TextView received data:", data);
     
@@ -106,12 +109,14 @@ function TextView({ data }) {
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i];
       
-      // Always include all messages, but format differently based on includeToolCalls
+      // Format the content and only include if not null
       const formattedContent = formatMessageContent(message.content);
-      out += `**${message.role.toUpperCase()}**:  ${formattedContent}\n\n`;
+      if (formattedContent !== null) {
+        out += `**${message.role.toUpperCase()}**:  ${formattedContent}\n\n`;
+      }
     }
     setText(out);
-  }, [data, includeToolCalls]);
+  }, [data, showToolCalls]);
 
   const handleCopyText = async () => {
     try {
@@ -127,7 +132,7 @@ function TextView({ data }) {
   };
 
   const toggleToolCalls = () => {
-    setIncludeToolCalls(!includeToolCalls);
+    setShowToolCalls(!showToolCalls);
   };
 
   return (
@@ -161,12 +166,12 @@ function TextView({ data }) {
         <FormControlLabel
           control={
             <Switch
-              checked={includeToolCalls}
+              checked={showToolCalls}
               onChange={toggleToolCalls}
               size="small"
             />
           }
-          label="Include Tool Calls"
+          label="Show Tool Calls"
           sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
         />
         <Button
