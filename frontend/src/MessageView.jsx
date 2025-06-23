@@ -474,13 +474,14 @@ function MessageView({ data }) {
         flexDirection: "column",
         height: "100%",
         overflow: "hidden", // Prevent outer container from scrolling
+        backgroundColor: "#ffffff",
       }}
     >
       
       {/* Controls */}
       <Box
         sx={{
-          backgroundColor: "#f5f5f5",
+          backgroundColor: "#ffffff",
           borderBottom: "1px solid #e0e0e0",
           padding: "8px 16px",
           display: "flex",
@@ -507,7 +508,7 @@ function MessageView({ data }) {
           flexGrow: 1,
           overflowY: "auto",
           padding: "16px",
-          backgroundColor: "#f5f5f5",
+          backgroundColor: "#ffffff",
           border: "1px solid #e0e0e0",
           borderTop: "none",
           borderRadius: "0 0 4px 4px",
