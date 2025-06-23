@@ -34,7 +34,7 @@ import {
   FormHelperText,
 } from "@mui/material";
 import DOMPurify from "dompurify";
-import ReactMarkdown from "react-markdown";
+import "showdown";
 import BuildIcon from "@mui/icons-material/Build";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -416,9 +416,14 @@ function Tools() {
                           }
                           secondary={
                             <Box sx={{ mt: 0.5 }}>
-                              <ReactMarkdown>
-                                {DOMPurify.sanitize(tool.description || "")}
-                              </ReactMarkdown>
+                              <div 
+                                dangerouslySetInnerHTML={{ 
+                                  __html: DOMPurify.sanitize(
+                                    // Convert markdown to HTML
+                                    new window.showdown.Converter().makeHtml(tool.description || "")
+                                  )
+                                }}
+                              />
                             </Box>
                           }
                         />
