@@ -135,12 +135,26 @@ function TextView({ data }) {
   // Copy as formatted text for Google Docs
   const handleCopyFormatted = async () => {
     try {
-      // Convert markdown to HTML
-      const html = marked(text);
+      // Convert markdown to HTML with custom styling
+      const customMarked = marked.setOptions({
+        highlight: function(code) {
+          return code;
+        }
+      });
+      
+      const html = customMarked(text);
       
       // Create a temporary element to hold the HTML
       const tempElement = document.createElement('div');
       tempElement.innerHTML = html;
+      
+      // Remove background colors from pre and code elements
+      const preElements = tempElement.querySelectorAll('pre, code');
+      preElements.forEach(el => {
+        el.style.backgroundColor = 'transparent';
+        el.style.border = '1px solid #e0e0e0';
+      });
+      
       document.body.appendChild(tempElement);
       
       // Select the content
@@ -180,7 +194,7 @@ function TextView({ data }) {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "#ffffff",
         border: "1px solid #e0e0e0",
         borderRadius: "4px",
         position: "relative",
@@ -193,7 +207,7 @@ function TextView({ data }) {
           position: "sticky",
           top: 0,
           zIndex: 1,
-          backgroundColor: "#f5f5f5",
+          backgroundColor: "#ffffff",
           borderBottom: "1px solid #e0e0e0",
           padding: "8px 16px",
           display: "flex",
@@ -249,16 +263,18 @@ function TextView({ data }) {
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
           "& pre": {
-            backgroundColor: "#f0f0f0",
+            backgroundColor: "#ffffff",
             padding: "12px",
             borderRadius: "4px",
             overflow: "auto",
+            border: "1px solid #e0e0e0",
           },
           "& code": {
-            backgroundColor: "#f0f0f0",
+            backgroundColor: "#ffffff",
             padding: "2px 4px",
             borderRadius: "2px",
             fontSize: "0.9em",
+            border: "1px solid #e0e0e0",
           },
           "& blockquote": {
             borderLeft: "4px solid #ddd",
