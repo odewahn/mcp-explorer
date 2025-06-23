@@ -33,6 +33,8 @@ import {
   InputLabel,
   FormHelperText,
 } from "@mui/material";
+import DOMPurify from "dompurify";
+import ReactMarkdown from "react-markdown";
 import BuildIcon from "@mui/icons-material/Build";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -412,7 +414,13 @@ function Tools() {
                               </Button>
                             </Box>
                           }
-                          secondary={tool.description}
+                          secondary={
+                            <Box sx={{ mt: 0.5 }}>
+                              <ReactMarkdown>
+                                {DOMPurify.sanitize(tool.description || "")}
+                              </ReactMarkdown>
+                            </Box>
+                          }
                         />
                         <ExpandMoreIcon
                           sx={{
