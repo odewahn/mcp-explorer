@@ -51,10 +51,6 @@ function App() {
       flexDirection: "column", 
       height: "100%",
     }}>
-      {/* System Prompt - Fixed at top */}
-      <Box sx={{ flexShrink: 0 }}>
-        <SystemPrompt onSystemPromptChange={handleSystemPromptChange} />
-      </Box>
 
       {/* Tabs and Content Area - Fixed height with scrolling */}
       <Box sx={{ 
@@ -109,6 +105,14 @@ function App() {
                 fontSize: "0.9rem",
               }}
             />
+            <Tab
+              label="System Prompt"
+              sx={{
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "0.9rem",
+              }}
+            />
           </Tabs>
         </Box>
 
@@ -129,6 +133,7 @@ function App() {
               {tabValue === 0 && <MessageView data={messages} />}
               {tabValue === 1 && <JSONView data={messages} />}
               {tabValue === 2 && <TextView data={messages} />}
+              {tabValue === 3 && <SystemPrompt onSystemPromptChange={handleSystemPromptChange} />}
             </>
           )}
         </Box>
