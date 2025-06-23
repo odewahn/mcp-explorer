@@ -33,9 +33,7 @@ import {
   InputLabel,
   FormHelperText,
 } from "@mui/material";
-import DOMPurify from "dompurify";
-import showdown from "showdown";
-import "./markdown-styles.css";
+
 import BuildIcon from "@mui/icons-material/Build";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -43,6 +41,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CodeIcon from "@mui/icons-material/Code";
 import StorageIcon from "@mui/icons-material/Storage";
 import ToolTester from "./ToolTester";
+import Markdown from "react-markdown";
 
 function Tools() {
   const [tools, setTools] = useState([]);
@@ -409,28 +408,11 @@ function Tools() {
                                   padding: "4px 12px",
                                   textTransform: "none",
                                   fontWeight: 500,
+                                  marginRight: "12px",
                                 }}
                               >
                                 Test
                               </Button>
-                            </Box>
-                          }
-                          secondary={
-                            <Box sx={{ mt: 0.5 }}>
-                              <div 
-                                className="markdown-content"
-                                dangerouslySetInnerHTML={{ 
-                                  __html: DOMPurify.sanitize(
-                                    // Convert markdown to HTML with options
-                                    new showdown.Converter({
-                                      tables: true,
-                                      simplifiedAutoLink: true,
-                                      strikethrough: true,
-                                      tasklists: true
-                                    }).makeHtml(tool.description || "")
-                                  )
-                                }}
-                              />
                             </Box>
                           }
                         />
@@ -454,6 +436,14 @@ function Tools() {
                             variant="outlined"
                             sx={{ p: 2, bgcolor: "#f5f5f5" }}
                           >
+                            <Markdown>
+                              {
+                                tool.description
+                                  ?.trim()
+                                  .replace(/\n    /g, "\n") // Remove 4-space indentation
+                              }
+                            </Markdown>
+
                             <Typography variant="subtitle2" gutterBottom>
                               <CodeIcon
                                 fontSize="small"
