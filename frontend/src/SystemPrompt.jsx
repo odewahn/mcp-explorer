@@ -53,7 +53,7 @@ function SystemPrompt({ onSystemPromptChange = () => {} }) {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3, height: '100%' }}>
+    <Container maxWidth="lg" sx={{ py: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Paper 
         variant="outlined" 
         sx={{ 
@@ -62,7 +62,9 @@ function SystemPrompt({ onSystemPromptChange = () => {} }) {
           border: '1px solid #e0e0e0',
           borderRadius: '4px',
           boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-          height: 'auto'
+          display: 'flex',
+          flexDirection: 'column',
+          height: '90vh'
         }}
       >
         <Typography 
@@ -91,7 +93,7 @@ function SystemPrompt({ onSystemPromptChange = () => {} }) {
           onChange={handleChange}
           value={systemPrompt}
           width="100%"
-          height="300px"
+          height="calc(90vh - 200px)" // 90% of viewport height minus space for header/margins
           fontSize={14}
           showPrintMargin={false}
           showGutter={true}
@@ -107,7 +109,8 @@ function SystemPrompt({ onSystemPromptChange = () => {} }) {
           }}
           style={{
             borderRadius: '4px',
-            border: '1px solid #e0e0e0'
+            border: '1px solid #e0e0e0',
+            flex: 1
           }}
         />
       </Paper>
