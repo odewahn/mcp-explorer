@@ -35,6 +35,7 @@ import {
 } from "@mui/material";
 import DOMPurify from "dompurify";
 import showdown from "showdown";
+import "./markdown-styles.css";
 import BuildIcon from "@mui/icons-material/Build";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -417,10 +418,16 @@ function Tools() {
                           secondary={
                             <Box sx={{ mt: 0.5 }}>
                               <div 
+                                className="markdown-content"
                                 dangerouslySetInnerHTML={{ 
                                   __html: DOMPurify.sanitize(
-                                    // Convert markdown to HTML
-                                    new showdown.Converter().makeHtml(tool.description || "")
+                                    // Convert markdown to HTML with options
+                                    new showdown.Converter({
+                                      tables: true,
+                                      simplifiedAutoLink: true,
+                                      strikethrough: true,
+                                      tasklists: true
+                                    }).makeHtml(tool.description || "")
                                   )
                                 }}
                               />
