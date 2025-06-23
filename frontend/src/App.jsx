@@ -105,14 +105,6 @@ function App() {
                 fontSize: "0.9rem",
               }}
             />
-            <Tab
-              label="System Prompt"
-              sx={{
-                textTransform: "none",
-                fontWeight: 500,
-                fontSize: "0.9rem",
-              }}
-            />
           </Tabs>
         </Box>
 
@@ -133,7 +125,6 @@ function App() {
               {tabValue === 0 && <MessageView data={messages} />}
               {tabValue === 1 && <JSONView data={messages} />}
               {tabValue === 2 && <TextView data={messages} />}
-              {tabValue === 3 && <SystemPrompt onSystemPromptChange={handleSystemPromptChange} />}
             </>
           )}
         </Box>
