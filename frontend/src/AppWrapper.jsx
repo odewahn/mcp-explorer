@@ -59,28 +59,35 @@ function AppWrapper() {
     // Get the initial path from window.location
     const path = window.location.pathname;
     // Handle paths
-    if (path === '/tools') {
-      return 'tools';
-    } else if (path === '/system-prompt') {
-      return 'system-prompt';
-    } else if (path === '/static/' || path === '/') {
-      return 'chat';
+    if (path === "/tools") {
+      return "tools";
+    } else if (path === "/system-prompt") {
+      return "system-prompt";
+    } else if (path === "/static/" || path === "/") {
+      return "chat";
     } else {
       // Default to chat for any other path
-      return 'chat';
+      return "chat";
     }
   });
 
   return (
     <BrowserRouter>
       <RouteObserver setActivePage={setActivePage} />
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <AppBar position="static" sx={{ backgroundColor: '#1976d2', boxShadow: 'none' }}>
+      <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+        <AppBar
+          position="static"
+          sx={{ backgroundColor: "#1976d2", boxShadow: "none" }}
+        >
           <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 500 }}>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ flexGrow: 1, fontWeight: 500 }}
+            >
               Claude Client
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <Button
                 color="inherit"
                 component={Link}
@@ -92,40 +99,17 @@ function AppWrapper() {
                     activePage === "chat"
                       ? "rgba(255, 255, 255, 0.15)"
                       : "transparent",
-                  borderRadius: '4px',
-                  textTransform: 'none',
+                  borderRadius: "4px",
+                  textTransform: "none",
                   fontWeight: 500,
-                  padding: '8px 16px',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                  }
+                  padding: "8px 16px",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.25)",
+                  },
                 }}
                 onClick={() => setActivePage("chat")}
               >
                 Chat
-              </Button>
-              <Button
-                color="inherit"
-                component={Link}
-                to="/tools"
-                startIcon={<BuildIcon />}
-                sx={{
-                  mr: 2,
-                  backgroundColor:
-                    activePage === "tools"
-                      ? "rgba(255, 255, 255, 0.15)"
-                      : "transparent",
-                  borderRadius: '4px',
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  padding: '8px 16px',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                  }
-                }}
-                onClick={() => setActivePage("tools")}
-              >
-                Tools
               </Button>
               <Tooltip title="Edit System Prompt">
                 <Button
@@ -138,31 +122,56 @@ function AppWrapper() {
                       activePage === "system-prompt"
                         ? "rgba(255, 255, 255, 0.15)"
                         : "transparent",
-                    borderRadius: '4px',
-                    textTransform: 'none',
+                    borderRadius: "4px",
+                    textTransform: "none",
                     fontWeight: 500,
-                    padding: '8px 16px',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                    }
+                    padding: "8px 16px",
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 0.25)",
+                    },
                   }}
                   onClick={() => setActivePage("system-prompt")}
                 >
                   System Prompt
                 </Button>
               </Tooltip>
+              <Button
+                color="inherit"
+                component={Link}
+                to="/tools"
+                startIcon={<BuildIcon />}
+                sx={{
+                  mr: 2,
+                  backgroundColor:
+                    activePage === "tools"
+                      ? "rgba(255, 255, 255, 0.15)"
+                      : "transparent",
+                  borderRadius: "4px",
+                  textTransform: "none",
+                  fontWeight: 500,
+                  padding: "8px 16px",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.25)",
+                  },
+                }}
+                onClick={() => setActivePage("tools")}
+              >
+                Tools
+              </Button>
             </Box>
           </Toolbar>
         </AppBar>
-        <Container sx={{ 
-          mt: 2, 
-          pb: 2, 
-          flexGrow: 1, 
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden', // Prevent container from scrolling
-          height: 'calc(100% - 64px)' // Subtract AppBar height
-        }}>
+        <Container
+          sx={{
+            mt: 2,
+            pb: 2,
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden", // Prevent container from scrolling
+            height: "calc(100% - 64px)", // Subtract AppBar height
+          }}
+        >
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/static/" element={<App />} />
