@@ -50,6 +50,11 @@ function TextView({ data }) {
       }
       
       if (toolResults.length > 0) {
+        // Skip tool_result content entirely when showToolCalls is false
+        if (!showToolCalls) {
+          return null; // Return null to indicate this message should be skipped
+        }
+        
         const result = toolResults[0];
         
         // Format the content properly
@@ -67,15 +72,11 @@ function TextView({ data }) {
           formattedContent = JSON.stringify(result.content, null, 2);
         }
         
-        // Always show tool results, but with different formatting based on showToolCalls
+        // Show tool results with full formatting
         if (result.is_error) {
-          return showToolCalls
-            ? `❌ **Tool Error**\n\`\`\`\n${formattedContent}\n\`\`\``
-            : `❌ **Tool Error**: ${formattedContent}`;
+          return `❌ **Tool Error**\n\`\`\`\n${formattedContent}\n\`\`\``;
         } else {
-          return showToolCalls
-            ? `✅ **Tool Result**\n\`\`\`\n${formattedContent}\n\`\`\``
-            : `✅ **Tool Result**: ${formattedContent}`;
+          return `✅ **Tool Result**\n\`\`\`\n${formattedContent}\n\`\`\``;
         }
       }
     }
