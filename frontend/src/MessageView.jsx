@@ -9,6 +9,8 @@ import {
   Chip,
   Collapse,
   Button,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CodeIcon from "@mui/icons-material/Code";
@@ -22,8 +24,7 @@ function MessageView({ data }) {
   const isFirstRender = useRef(true);
   const prevDataLength = useRef(0);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
-  // Always show tool calls
-  const showToolCalls = true;
+  const [showToolCalls, setShowToolCalls] = useState(true);
   const [expandedTools, setExpandedTools] = useState({});
 
   // Scroll to bottom when data changes (only if new data is added)
@@ -368,9 +369,17 @@ function MessageView({ data }) {
       return true;
     }
     
-    // For tool messages, always show them
-    // The rendering will be different based on showToolCalls
+    // For tool messages, check if they should be shown
     if (Array.isArray(message.content)) {
+      // If not showing tool calls and all content items are tool-related, skip the message
+      if (!showToolCalls) {
+        const allToolRelated = message.content.every(
+          item => item.type === "tool_use" || item.type === "tool_result"
+        );
+        if (allToolRelated) {
+          return false;
+        }
+      }
       return true;
     }
     
@@ -404,6 +413,30 @@ function MessageView({ data }) {
         overflow: "hidden", // Prevent outer container from scrolling
       }}
     >
+      
+      {/* Controls */}
+      <Box
+        sx={{
+          backgroundColor: "#f5f5f5",
+          borderBottom: "1px solid #e0e0e0",
+          padding: "8px 16px",
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+        }}
+      >
+        <FormControlLabel
+          control={
+            <Switch
+              checked={showToolCalls}
+              onChange={() => setShowToolCalls(!showToolCalls)}
+              size="small"
+            />
+          }
+          label="Show Tool Calls"
+          sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+        />
+      </Box>
       
       <Box
         ref={containerRef}
