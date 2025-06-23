@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Button, Box, Snackbar, Switch, FormControlLabel } from "@mui/material";
-import { ContentCopy, Code } from "@mui/icons-material";
+import { Button, Box, Snackbar, Switch, FormControlLabel, Tooltip } from "@mui/material";
+import { ContentCopy, Code, FormatBold } from "@mui/icons-material";
 // You'll need to install: npm install react-markdown
 import ReactMarkdown from "react-markdown";
+// For HTML conversion
+import { marked } from "marked";
 
 function TextView({ data }) {
   const containerRef = useRef(null);
   const [text, setText] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
+  const [copyMessage, setCopyMessage] = useState("");
   const [showToolCalls, setShowToolCalls] = useState(false);
 
   // Scroll to bottom whenever data changes
@@ -122,9 +125,43 @@ function TextView({ data }) {
   const handleCopyText = async () => {
     try {
       await navigator.clipboard.writeText(text);
+      setCopyMessage("Text copied to clipboard!");
       setCopySuccess(true);
     } catch (err) {
       console.error("Failed to copy text: ", err);
+    }
+  };
+
+  // Copy as formatted text for Google Docs
+  const handleCopyFormatted = async () => {
+    try {
+      // Convert markdown to HTML
+      const html = marked(text);
+      
+      // Create a temporary element to hold the HTML
+      const tempElement = document.createElement('div');
+      tempElement.innerHTML = html;
+      document.body.appendChild(tempElement);
+      
+      // Select the content
+      const range = document.createRange();
+      range.selectNodeContents(tempElement);
+      
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      // Execute copy command
+      document.execCommand('copy');
+      
+      // Clean up
+      selection.removeAllRanges();
+      document.body.removeChild(tempElement);
+      
+      setCopyMessage("Formatted text copied for Google Docs!");
+      setCopySuccess(true);
+    } catch (err) {
+      console.error("Failed to copy formatted text: ", err);
     }
   };
 
@@ -175,15 +212,30 @@ function TextView({ data }) {
           label="Show Tool Calls"
           sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
         />
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<ContentCopy />}
-          onClick={handleCopyText}
-          sx={{ fontSize: "0.75rem" }}
-        >
-          Copy All
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Tooltip title="Copy raw markdown text">
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ContentCopy />}
+              onClick={handleCopyText}
+              sx={{ fontSize: "0.75rem" }}
+            >
+              Copy Text
+            </Button>
+          </Tooltip>
+          <Tooltip title="Copy as formatted text for Google Docs">
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<FormatBold />}
+              onClick={handleCopyFormatted}
+              sx={{ fontSize: "0.75rem" }}
+            >
+              Copy Formatted
+            </Button>
+          </Tooltip>
+        </Box>
       </Box>
 
       {/* Markdown Content */}
@@ -224,7 +276,7 @@ function TextView({ data }) {
         open={copySuccess}
         autoHideDuration={2000}
         onClose={handleCloseSnackbar}
-        message="Text copied to clipboard!"
+        message={copyMessage}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
     </Box>

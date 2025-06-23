@@ -11,21 +11,29 @@ import {
   Button,
   Switch,
   FormControlLabel,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import CodeIcon from "@mui/icons-material/Code";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+// For HTML conversion
+import { marked } from "marked";
 
 function MessageView({ data }) {
   const containerRef = useRef(null);
   const isFirstRender = useRef(true);
   const prevDataLength = useRef(0);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
+  const [copyMessage, setCopyMessage] = useState("");
   const [showToolCalls, setShowToolCalls] = useState(true);
   const [expandedTools, setExpandedTools] = useState({});
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [selectedMessageIndex, setSelectedMessageIndex] = useState(null);
 
   // Scroll to bottom when data changes (only if new data is added)
   useEffect(() => {
@@ -53,8 +61,19 @@ function MessageView({ data }) {
     prevDataLength.current = currentLength;
   }, [data]);
 
-  // Function to copy message content to clipboard
-  const copyToClipboard = (content, index) => {
+  // Function to open copy menu
+  const openCopyMenu = (event, index) => {
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedMessageIndex(index);
+  };
+
+  // Function to close copy menu
+  const closeCopyMenu = () => {
+    setMenuAnchorEl(null);
+  };
+
+  // Function to copy raw message content to clipboard
+  const copyRawToClipboard = (content, index) => {
     // If content is an array, stringify it
     const textToCopy = typeof content === "string" 
       ? content 
@@ -64,13 +83,57 @@ function MessageView({ data }) {
       () => {
         // Show copied indicator
         setCopiedMessageId(index);
+        setCopyMessage("Raw text copied");
         // Hide after 2 seconds
         setTimeout(() => setCopiedMessageId(null), 2000);
+        closeCopyMenu();
       },
       (err) => {
         console.error("Could not copy text: ", err);
       }
     );
+  };
+
+  // Function to copy formatted message content for Google Docs
+  const copyFormattedToClipboard = (content, index) => {
+    try {
+      // If content is not a string, stringify it
+      const textToFormat = typeof content === "string" 
+        ? content 
+        : JSON.stringify(content, null, 2);
+      
+      // Convert to HTML
+      const html = marked(textToFormat);
+      
+      // Create a temporary element to hold the HTML
+      const tempElement = document.createElement('div');
+      tempElement.innerHTML = html;
+      document.body.appendChild(tempElement);
+      
+      // Select the content
+      const range = document.createRange();
+      range.selectNodeContents(tempElement);
+      
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      // Execute copy command
+      document.execCommand('copy');
+      
+      // Clean up
+      selection.removeAllRanges();
+      document.body.removeChild(tempElement);
+      
+      // Show copied indicator
+      setCopiedMessageId(index);
+      setCopyMessage("Formatted text copied for Google Docs");
+      // Hide after 2 seconds
+      setTimeout(() => setCopiedMessageId(null), 2000);
+      closeCopyMenu();
+    } catch (err) {
+      console.error("Could not copy formatted text: ", err);
+    }
   };
 
   // Toggle expanded state for a specific tool
@@ -475,19 +538,21 @@ function MessageView({ data }) {
                   <Typography variant="subtitle2" color="text.secondary">
                     {message.role.toUpperCase()}
                   </Typography>
-                  <Tooltip
-                    title={
-                      copiedMessageId === index ? "Copied!" : "Copy to clipboard"
-                    }
-                  >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {copiedMessageId === index && (
+                      <Typography variant="caption" color="success.main" sx={{ mr: 1 }}>
+                        {copyMessage}
+                      </Typography>
+                    )}
                     <IconButton
                       size="small"
-                      onClick={() => copyToClipboard(message.content, index)}
+                      onClick={(event) => openCopyMenu(event, index)}
                       color={copiedMessageId === index ? "success" : "default"}
+                      aria-label="Copy options"
                     >
                       <ContentCopyIcon fontSize="small" />
                     </IconButton>
-                  </Tooltip>
+                  </Box>
                 </Box>
                 <Divider sx={{ mb: 1 }} />
                 {renderMessageContent(message, index)}
@@ -500,6 +565,28 @@ function MessageView({ data }) {
           </Box>
         )}
       </Box>
+
+      {/* Copy Options Menu */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={closeCopyMenu}
+      >
+        <MenuItem 
+          onClick={() => selectedMessageIndex !== null && 
+            copyRawToClipboard(messages[selectedMessageIndex].content, selectedMessageIndex)}
+        >
+          <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
+          Copy Raw Text
+        </MenuItem>
+        <MenuItem 
+          onClick={() => selectedMessageIndex !== null && 
+            copyFormattedToClipboard(messages[selectedMessageIndex].content, selectedMessageIndex)}
+        >
+          <FormatBoldIcon fontSize="small" sx={{ mr: 1 }} />
+          Copy Formatted for Google Docs
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }
