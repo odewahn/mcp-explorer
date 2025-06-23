@@ -144,46 +144,9 @@ function MessageView({ data }) {
     }));
   };
 
-  // Function to determine message style based on role
+  // Function to determine message style based on role (now returns empty object)
   const getMessageStyle = (role) => {
-    switch (role) {
-      case "user":
-        return {
-          backgroundColor: "#ECEFF1", // Light blue
-          color: "#263238", // Dark text
-          alignSelf: "flex-end",
-          marginLeft: "20%",
-          borderRadius: "4px",
-          padding: "10px 14px",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-        };
-      case "assistant":
-        return {
-          backgroundColor: "#FFFFFF", // White
-          color: "#333333", // Dark text
-          alignSelf: "flex-start",
-          marginRight: "20%",
-          borderRadius: "4px",
-          padding: "10px 14px",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-          border: "1px solid #e0e0e0",
-        };
-      case "system":
-        return {
-          backgroundColor: "#f5f5f5", // Light grey
-          color: "#666666", // Medium grey text
-          alignSelf: "center",
-          fontStyle: "italic",
-          width: "90%",
-          borderRadius: "4px",
-          padding: "8px 12px",
-          border: "1px solid #e0e0e0",
-        };
-      default:
-        return {
-          backgroundColor: "#f5f5f5",
-        };
-    }
+    return {}; // No styling differences based on role
   };
 
   // Render tool use content
@@ -226,8 +189,7 @@ function MessageView({ data }) {
           <Paper 
             variant="outlined" 
             sx={{ 
-              p: 1.5, 
-              backgroundColor: '#f8f9fa',
+              p: 1.5,
               maxHeight: '200px',
               overflow: 'auto'
             }}
@@ -302,8 +264,7 @@ function MessageView({ data }) {
           <Paper 
             variant="outlined" 
             sx={{ 
-              p: 1.5, 
-              backgroundColor: isError ? '#fff8f8' : '#f8fff8',
+              p: 1.5,
               maxHeight: '200px',
               overflow: 'auto'
             }}
@@ -380,8 +341,7 @@ function MessageView({ data }) {
                     />
                     <Box 
                       sx={{ 
-                        pl: 1, 
-                        borderLeft: `3px solid ${isError ? '#f44336' : '#4caf50'}`,
+                        pl: 1,
                         fontSize: '0.9rem',
                         whiteSpace: "pre-wrap",
                         wordBreak: "break-word",
@@ -526,7 +486,8 @@ function MessageView({ data }) {
                 elevation={1}
                 sx={{
                   padding: 2,
-                  ...getMessageStyle(message.role),
+                  border: "1px solid #e0e0e0",
+                  marginBottom: 1,
                 }}
               >
                 <Box
