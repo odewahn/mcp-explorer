@@ -30,7 +30,7 @@ function MessageView({ data }) {
   const prevDataLength = useRef(0);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
   const [copyMessage, setCopyMessage] = useState("");
-  const [showToolCalls, setShowToolCalls] = useState(true);
+  const [showToolCalls, setShowToolCalls] = useState(false);
   const [expandedTools, setExpandedTools] = useState({});
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedMessageIndex, setSelectedMessageIndex] = useState(null);
