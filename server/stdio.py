@@ -2,6 +2,8 @@ import asyncio
 import json
 import logging
 from typing import Dict, Any, List, Optional
+from mcp.types import CallToolResult
+
 
 from .base import MCPServerConnection
 
@@ -160,11 +162,14 @@ class STDIOServerConnection(MCPServerConnection):
 
         return self.tools
 
-    async def call_tool(self, tool_name: str, tool_args: Dict[str, Any]) -> Any:
+    async def call_tool(
+        self, tool_name: str, tool_args: Dict[str, Any]
+    ) -> CallToolResult:
+        """Call a tool with the given arguments and return a CallToolResult"""
         if not self._connected:
             raise Exception("Not connected to server.")
 
-        result = await self._send_request(
+        response = await self._send_request(
             {
                 "jsonrpc": "2.0",
                 "method": "tools/call",
@@ -173,10 +178,10 @@ class STDIOServerConnection(MCPServerConnection):
             }
         )
 
-        if result is None:
-            raise Exception(f"No response from tool '{tool_name}'")
+        if not response or "result" not in response:
+            raise Exception(f"No valid result from tool '{tool_name}'")
 
-        return result
+        return CallToolResult(**response["result"])
 
     async def disconnect(self) -> None:
         logger.info("Disconnecting...")
