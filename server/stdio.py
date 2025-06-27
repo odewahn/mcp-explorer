@@ -1,324 +1,219 @@
 import asyncio
-import logging
-import subprocess
 import json
-from typing import List, Dict, Any, Optional, Tuple
-from mcp.types import Tool, CallToolResult, InitializeResult, ListToolsResult
+import logging
+from typing import Dict, Any, List, Optional
+
 from .base import MCPServerConnection
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("stdio_server")
 
 
 class STDIOServerConnection(MCPServerConnection):
-    """Implementation of MCP server connection using direct process management"""
-
     def __init__(self):
-        self.tools = []
-        self._connected = False
-        self._command = None
-        self._args = []
-        self._env = None
         self._process = None
+        self._connected = False
         self._request_id = 0
-        self._pending_requests = {}
+        self.tools = []
 
     async def connect(self, server_url: str) -> bool:
-        """
-        Connect to an MCP server running with STDIO transport
-
-        The server_url should be a command to execute, e.g., "python server.py"
-        """
         try:
-            # Parse the command from the server_url
             cmd_parts = server_url.split()
-            self._command = cmd_parts[0]
-            self._args = cmd_parts[1:] if len(cmd_parts) > 1 else []
+            cmd = cmd_parts[0]
+            args = cmd_parts[1:]
 
-            logger.info(
-                f"Attempting to start STDIO server with command: {self._command} {' '.join(self._args)}"
-            )
-
-            # Start the subprocess
+            logger.info(f"Starting server with: {cmd} {' '.join(args)}")
             self._process = await asyncio.create_subprocess_exec(
-                self._command,
-                *self._args,
+                cmd,
+                *args,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env=self._env,
             )
 
-            # Start logging stderr in the background
             asyncio.create_task(self._log_stderr())
 
-            # Start processing responses in the background
-            asyncio.create_task(self._process_responses())
-
-            # Send initialize request
-            initialize_result = await self._send_request(
-                "initialize",
-                {
-                    "protocolVersion": "0.1.0",
-                    "clientInfo": {"name": "mcp-client", "version": "1.0.0"},
-                    "capabilities": {"tools": {}},
-                },
-            )
-
-            if not initialize_result:
-                logger.error("Failed to initialize connection")
-                await self.disconnect()
-                return False
-
-            # Send initialized notification
-            await self._send_notification("initialized", {})
-
-            # List tools to verify connection
-            logger.info("Requesting tool list...")
-            tools_result = await self._send_request("tools/list", {})
-
-            if not tools_result or "tools" not in tools_result:
-                logger.error("Failed to list tools")
-                await self.disconnect()
-                return False
-
-            self.tools = tools_result["tools"]
-            logger.info(
-                f"Successfully connected to STDIO server with {len(self.tools)} tools"
-            )
-
-            self._connected = True
-            return True
-        except Exception as e:
-            logger.error(f"Error connecting to STDIO server: {str(e)}")
-            await self.disconnect()
-            self._connected = False
-            return False
-
-    async def _log_stderr(self):
-        """Log stderr output from the subprocess"""
-        if not self._process or self._process.stderr.at_eof():
-            return
-
-        while self._process and not self._process.stderr.at_eof():
-            try:
-                line = await self._process.stderr.readline()
-                if line:
-                    stderr_line = line.decode("utf-8").rstrip()
-                    logger.error(f"STDIO server stderr: {stderr_line}")
-            except Exception as e:
-                logger.error(f"Error reading stderr: {e}")
-                break
-
-    async def _process_responses(self):
-        """Process responses from the server"""
-        if not self._process or self._process.stdout.at_eof():
-            return
-
-        while self._process and not self._process.stdout.at_eof():
-            try:
-                line = await self._process.stdout.readline()
-                if not line:
-                    logger.warning("Server closed stdout")
-                    break
-
-                response_str = line.decode("utf-8").strip()
-                logger.debug(f"Raw response: {response_str}")
-
-                try:
-                    response = json.loads(response_str)
-
-                    # Handle request responses
-                    if "id" in response:
-                        request_id = response["id"]
-                        if request_id in self._pending_requests:
-                            # Get the future from pending requests
-                            future = self._pending_requests.pop(request_id)
-
-                            if "error" in response:
-                                error = response["error"]
-                                future.set_exception(
-                                    Exception(f"RPC error: {error.get('message')}")
-                                )
-                            else:
-                                future.set_result(response.get("result"))
-                        else:
-                            logger.warning(
-                                f"Received response for unknown request ID: {request_id}"
-                            )
-
-                    # Handle notifications
-                    elif "method" in response and "id" not in response:
-                        logger.info(f"Received notification: {response['method']}")
-
-                    else:
-                        logger.warning(f"Received unknown message type: {response}")
-
-                except json.JSONDecodeError as e:
-                    logger.error(f"Error parsing response JSON: {e}")
-
-            except Exception as e:
-                logger.error(f"Error processing response: {e}")
-                # Don't break here to keep the loop running
-
-    async def _send_request(
-        self, method: str, params: Dict[str, Any], timeout: float = 10.0
-    ) -> Any:
-        """Send a request to the server and wait for response"""
-        if not self._process or self._process.stdin.is_closing():
-            raise Exception("Process not running or stdin is closed")
-
-        # Create a request ID
-        self._request_id += 1
-        request_id = str(self._request_id)
-
-        # Create a future to wait for the response
-        future = asyncio.Future()
-        self._pending_requests[request_id] = future
-
-        # Build the request
-        request = {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "method": method,
-            "params": params,
-        }
-
-        # Send the request
-        request_json = json.dumps(request)
-        request_bytes = (request_json + "\n").encode("utf-8")
-        logger.debug(f"Sending request: {request_json}")
-        self._process.stdin.write(request_bytes)
-        await self._process.stdin.drain()
-
-        # Wait for the response with timeout
-        try:
-            result = await asyncio.wait_for(future, timeout)
-            return result
-        except asyncio.TimeoutError:
-            # Remove the pending request on timeout
-            if request_id in self._pending_requests:
-                self._pending_requests.pop(request_id)
-            logger.error(f"Timeout waiting for response to {method}")
-            raise Exception(f"Timeout waiting for response to {method}")
-
-    async def _send_notification(self, method: str, params: Dict[str, Any]) -> None:
-        """Send a notification to the server (no response expected)"""
-        if not self._process or self._process.stdin.is_closing():
-            raise Exception("Process not running or stdin is closed")
-
-        # Build the notification
-        notification = {"jsonrpc": "2.0", "method": method, "params": params}
-
-        # Send the notification
-        notification_json = json.dumps(notification)
-        notification_bytes = (notification_json + "\n").encode("utf-8")
-        logger.debug(f"Sending notification: {notification_json}")
-        self._process.stdin.write(notification_bytes)
-        await self._process.stdin.drain()
-
-    async def disconnect(self) -> None:
-        """Disconnect from the MCP server"""
-        try:
-            logger.info("Disconnecting from STDIO server...")
-
-            # Try to send shutdown notification if the connection is still open
-            if (
-                self._connected
-                and self._process
-                and not self._process.stdin.is_closing()
-            ):
-                try:
-                    await self._send_notification("shutdown", {})
-                except Exception as e:
-                    logger.warning(f"Error sending shutdown notification: {e}")
-
-            # Cancel all pending requests
-            for request_id, future in self._pending_requests.items():
-                if not future.done():
-                    future.set_exception(Exception("Connection closed"))
-            self._pending_requests.clear()
-
-            # Terminate the process
-            if self._process:
-                try:
-                    self._process.terminate()
-                    try:
-                        await asyncio.wait_for(self._process.wait(), timeout=2.0)
-                    except asyncio.TimeoutError:
-                        logger.warning(
-                            "Process did not terminate gracefully, killing it"
-                        )
-                        self._process.kill()
-                except Exception as e:
-                    logger.error(f"Error terminating process: {e}")
-                finally:
-                    self._process = None
-
-            self._connected = False
-            logger.info("Disconnected from STDIO server")
-        except Exception as e:
-            logger.error(f"Error disconnecting from STDIO server: {e}")
-
-    async def list_tools(self) -> List[Dict[str, Any]]:
-        """List available tools from the server"""
-        if not self.is_connected:
-            raise Exception("Not connected to server")
-
-        try:
-            result = await self._send_request("tools/list", {})
-
-            if not result or "tools" not in result:
-                raise Exception("Invalid response from tools/list")
-
-            self.tools = result["tools"]
-
-            # Convert to the expected format
-            return [
-                {
-                    "name": tool["name"],
-                    "description": tool["description"],
-                    "input_schema": tool["inputSchema"],
-                }
-                for tool in self.tools
-            ]
-        except Exception as e:
-            logger.error(f"Error listing tools: {e}")
-            raise
-
-    async def call_tool(self, tool_name: str, tool_args: Dict[str, Any]) -> Any:
-        """Call a tool with the given arguments"""
-        if not self.is_connected:
-            raise Exception("Not connected to server")
-
-        try:
+            # Step 1: Initialize
             result = await self._send_request(
-                "tools/call", {"name": tool_name, "arguments": tool_args}
+                {
+                    "jsonrpc": "2.0",
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2024-11-05",  # Updated version
+                        "clientInfo": {
+                            "name": "refactored-stdio-client",
+                            "version": "1.0.0",
+                        },
+                        "capabilities": {"tools": {}},
+                    },
+                    "id": self._next_id(),
+                }
             )
 
             if not result:
-                raise Exception("No result from tool call")
+                logger.error("Initialization failed.")
+                await self.disconnect()
+                return False
 
-            # Create a response object to match your expected interface
-            class ToolResponse:
-                def __init__(self, data):
-                    self.content = data.get("content", [])
-                    self.is_error = data.get("isError", False)
+            # Step 2: Initialized notification
+            await self._send_notification("notifications/initialized", {})
 
-                def __str__(self):
-                    return str(self.content)
+            # Step 3: List tools
+            tools_result = await self._send_request(
+                {
+                    "jsonrpc": "2.0",
+                    "method": "tools/list",
+                    "params": {},
+                    "id": self._next_id(),
+                }
+            )
 
-            return ToolResponse(result)
+            # Handle tools response (allow both list or dict format)
+            if isinstance(tools_result, dict) and "tools" in tools_result:
+                self.tools = tools_result["tools"]
+            elif isinstance(tools_result, list):
+                self.tools = tools_result
+            else:
+                logger.warning("Unexpected tools list format: %s", tools_result)
+                self.tools = []
+
+            logger.info(f"Found {len(self.tools)} tools.")
+            self._connected = True
+            return True
+
         except Exception as e:
-            logger.error(f"Error calling tool {tool_name}: {e}")
-            raise
+            logger.error(f"Failed to connect: {e}")
+            await self.disconnect()
+            return False
+
+    async def _send_request(
+        self, payload: Dict[str, Any], timeout: float = 10.0
+    ) -> Optional[Dict[str, Any]]:
+        if (
+            not self._process
+            or not self._process.stdin
+            or self._process.stdin.is_closing()
+        ):
+            logger.error("Process not available for request.")
+            return None
+
+        try:
+            message = json.dumps(payload) + "\n"
+            logger.info(f"Sending request: {message.strip()}")
+            self._process.stdin.write(message.encode())
+            await self._process.stdin.drain()
+
+            # Only wait for response if ID is present
+            if "id" not in payload:
+                return None
+
+            line = await asyncio.wait_for(self._process.stdout.readline(), timeout)
+            response_str = line.decode().strip()
+            logger.info(f"Received response: {response_str}")
+            return json.loads(response_str)
+
+        except asyncio.TimeoutError:
+            logger.error(
+                f"Timeout waiting for response to method '{payload.get('method')}'"
+            )
+        except Exception as e:
+            logger.error(f"Request error: {e}")
+
+        return None
+
+    async def _send_notification(self, method: str, params: Dict[str, Any]) -> None:
+        payload = {"jsonrpc": "2.0", "method": method, "params": params}
+        await self._send_request(payload)
+
+    async def list_tools(self) -> List[Dict[str, Any]]:
+        """List available tools from the server."""
+        if not self._connected:
+            raise Exception("Not connected to server.")
+
+        response = await self._send_request(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/list",
+                "params": {},
+                "id": self._next_id(),
+            }
+        )
+
+        result = response.get("result") if response else None
+
+        raw_tools = []
+        if isinstance(result, dict) and "tools" in result:
+            raw_tools = result["tools"]
+        elif isinstance(result, list):
+            raw_tools = result
+        else:
+            logger.warning("Unexpected format from tools/list result: %s", result)
+
+        # Convert camelCase to snake_case for consistency
+        self.tools = [
+            {
+                "name": tool.get("name"),
+                "description": tool.get("description"),
+                "input_schema": tool.get("inputSchema", {}),
+            }
+            for tool in raw_tools
+        ]
+
+        return self.tools
+
+    async def call_tool(self, tool_name: str, tool_args: Dict[str, Any]) -> Any:
+        if not self._connected:
+            raise Exception("Not connected to server.")
+
+        result = await self._send_request(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": tool_name, "arguments": tool_args},
+                "id": self._next_id(),
+            }
+        )
+
+        if result is None:
+            raise Exception(f"No response from tool '{tool_name}'")
+
+        return result
+
+    async def disconnect(self) -> None:
+        logger.info("Disconnecting...")
+
+        if self._process:
+            if self._process.stdin and not self._process.stdin.is_closing():
+                try:
+                    await self._send_notification("shutdown", {})
+                except Exception:
+                    pass
+
+                self._process.stdin.close()
+
+            try:
+                await asyncio.wait_for(self._process.wait(), timeout=3)
+            except asyncio.TimeoutError:
+                logger.warning("Force-killing process...")
+                self._process.kill()
+                await self._process.wait()
+
+        self._process = None
+        self._connected = False
+        logger.info("Disconnected.")
+
+    async def _log_stderr(self):
+        if not self._process or not self._process.stderr:
+            return
+
+        while not self._process.stderr.at_eof():
+            line = await self._process.stderr.readline()
+            if line:
+                logger.warning(f"STDERR: {line.decode().rstrip()}")
+
+    def _next_id(self) -> int:
+        self._request_id += 1
+        return self._request_id
 
     @property
     def is_connected(self) -> bool:
-        """Check if the connection is active"""
-        return (
-            self._connected
-            and self._process is not None
-            and self._process.returncode is None
-        )
+        return self._connected and self._process and self._process.returncode is None
