@@ -1,5 +1,4 @@
 import logging
-## no direct type hints in this module
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,7 +38,7 @@ root_dir = os.path.abspath(
 # client = MCPClient()  # removed; using shared singleton above
 
 
-# Create FastAPI app
+# Create FastAPI app and include API router
 app = FastAPI(title="MCP Client API")
 app.add_middleware(
     CORSMiddleware,
@@ -53,6 +52,8 @@ app.mount(
     StaticFiles(directory=os.path.join(root_dir, "static"), html=True),
     name="static",
 )
+from mcp_explorer.api.routes import router as api_router
+app.include_router(api_router)
 
 @app.on_event("shutdown")
 async def shutdown_event():
