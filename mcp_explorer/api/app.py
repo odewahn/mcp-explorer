@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict
+## no direct type hints in this module
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
