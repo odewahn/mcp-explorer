@@ -1,4 +1,5 @@
 import logging
+
 try:
     from pydantic import BaseSettings
 except ImportError:
@@ -15,6 +16,10 @@ class Settings(BaseSettings):
     )
     max_tokens: int = 8192
     max_tool_calls: int = 5
+
+    # Web interface settings
+    dev_url: str = "http://localhost:5173"
+    prod_url: str = "http://localhost:8000/static"
 
     # Logging settings
     log_file: str = "mcp_explorer.log"

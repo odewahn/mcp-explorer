@@ -488,9 +488,17 @@ function Tools() {
                   id="server-type"
                   value={newServer.server_type || "sse"}
                   label="Server Type"
-                  onChange={(e) =>
-                    setNewServer({ ...newServer, server_type: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const server_type = e.target.value;
+                    setNewServer({
+                      ...newServer,
+                      server_type,
+                      url:
+                        server_type === "stdio"
+                          ? "python -u stdio-server.py"
+                          : "http://localhost:8192/sse",
+                    });
+                  }}
                 >
                   <MenuItem value="sse">SSE</MenuItem>
                   <MenuItem value="stdio">STDIO</MenuItem>
@@ -520,8 +528,8 @@ function Tools() {
                 }
                 placeholder={
                   newServer.server_type === "stdio"
-                    ? "python mcp_server.py"
-                    : "http://localhost:8080/sse"
+                    ? "python -u stdio-server.py"
+                    : "http://localhost:8192/sse"
                 }
                 helperText={
                   newServer.server_type === "stdio"

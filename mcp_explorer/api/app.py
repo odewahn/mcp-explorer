@@ -53,9 +53,9 @@ async def shutdown_event():
 def main():
     # Check if os.environ.get("ENV") is set to "dev"
     if os.environ.get("ENV") == "dev":
-        url = "http://localhost:5173"
+        url = settings.dev_url
     else:
-        url = "http://localhost:8000/static"
+        url = settings.prod_url
     webbrowser.open_new(url)
     # Run the FastAPI app directly (this will create its own event loop)
     uvicorn.run(app, host="0.0.0.0", port=8000)
