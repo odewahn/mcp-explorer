@@ -20,3 +20,11 @@ pycodesign ../pycodesign.ini
 ```
 
 NB: Before you can notarize, you need to have a developer account with Apple and have set up the notarization process. This is a bit of a pain, but it's not too bad. You can find the instructions [here](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution).
+
+# Testing STDIO client
+
+This repo include a simple STDIO server that you can use to test the client:
+
+```
+python -u stdio-server.py
+```
