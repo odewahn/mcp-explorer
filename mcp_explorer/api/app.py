@@ -1,6 +1,4 @@
 import logging
-import os
-import webbrowser
 from typing import List, Dict
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse
