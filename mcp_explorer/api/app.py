@@ -106,10 +106,13 @@ async def get_messages():
 @app.get("/tools", response_model=ToolsResponse)
 async def get_tools():
     """Get the list of available MCP tools"""
+    logger.info("Handling /tools request: refreshing tools from client")
     try:
         tools = await client.refresh_tools()
+        logger.info("/tools response: %d tools available", len(tools))
         return ToolsResponse(tools=tools)
     except Exception as e:
+        logger.exception("Exception while retrieving tools")
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve tools: {str(e)}"
         )
