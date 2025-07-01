@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 import anyio
 import logging
 from typing import Optional, List, Dict, Any
@@ -19,14 +18,10 @@ from query_processor import process_query_simple
 import os
 import webbrowser
 
-MAX_TOKENS = 8192  # Maximum tokens for Claude API calls
+# Centralized configuration and logging
+from config import settings, configure_logging
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(), logging.FileHandler("mcp_explorer.log")],
-)
+configure_logging()
 logger = logging.getLogger("mcp_explorer")
 
 # Import our custom modules
@@ -70,7 +65,7 @@ class MCPClient:
         elif server_type.lower() == "stdio":
             return await self.connect_to_stdio_server(server_url, server_name)
         else:
-            print(f"Unsupported server type: {server_type}")
+            logger.error("Unsupported server type: %s", server_type)
             return False
 
     async def connect_to_sse_server(
@@ -107,13 +102,14 @@ class MCPClient:
             # Update the available tools list
             self.refresh_available_tools()
 
-            print(
-                f"\nConnected to server {server_name} with tools:",
+            logger.info(
+                "Connected to server %s with tools: %s",
+                server_name,
                 [tool["name"] for tool in tools],
             )
             return True
         except Exception as e:
-            print(f"Error connecting to server {server_name}: {str(e)}")
+            logger.error("Error connecting to server %s: %s", server_name, str(e))
             return False
 
     def refresh_available_tools(self):
@@ -215,7 +211,7 @@ class MCPClient:
             server_info = self.tool_servers[server_name]
             if "connection" in server_info:
                 try:
-                    print(f"Refreshing tools for server: {server_name}")
+                    logger.info("Refreshing tools for server: %s", server_name)
                     connection = server_info["connection"]
                     tools = await connection.list_tools()
 
@@ -228,36 +224,42 @@ class MCPClient:
                         }
                         for tool in tools
                     ]
-                    print(
-                        f"Found {len(server_info['tools'])} tools in server {server_name}"
+                    logger.info(
+                        "Found %d tools in server %s", len(server_info["tools"]), server_name
                     )
                     updated_tools.extend(server_info["tools"])
                 except anyio.ClosedResourceError:
-                    print(
-                        f"Server {server_name} connection is closed. Marking for removal."
+                    logger.warning(
+                        "Server %s connection is closed. Marking for removal.", server_name
                     )
                     servers_to_remove.append(server_name)
                 except Exception as e:
                     import traceback
 
-                    print(f"ERROR refreshing tools for server {server_name}: {str(e)}")
-                    print(f"Traceback: {traceback.format_exc()}")
-                    # If we get a connection error, mark the server for removal
+                    logger.error(
+                        "ERROR refreshing tools for server %s: %s", server_name, str(e)
+                    )
+                    logger.error("Traceback: %s", traceback.format_exc())
                     if "connection" in str(e).lower() or "closed" in str(e).lower():
                         servers_to_remove.append(server_name)
 
         # Remove any servers that had closed connections
         for server_name in servers_to_remove:
             if server_name in self.tool_servers and server_name != "default":
-                print(f"Removing server with closed connection: {server_name}")
+                logger.info(
+                    "Removing server with closed connection: %s", server_name
+                )
                 try:
-                    # Just remove it from our dictionary, don't try to clean up the session
                     del self.tool_servers[server_name]
                 except Exception as e:
-                    print(f"Error removing server {server_name}: {str(e)}")
+                    logger.error(
+                        "Error removing server %s: %s", server_name, str(e)
+                    )
 
         self.available_tools = updated_tools
-        print(f"Total tools available across all servers: {len(self.available_tools)}")
+        logger.info(
+            "Total tools available across all servers: %d", len(self.available_tools)
+        )
         return self.available_tools
 
 
@@ -290,27 +292,25 @@ async def process_query(query: Query, background_tasks: BackgroundTasks):
     """Process a query and return the response"""
     try:
         # Use the system prompt from the request
-        print(f"Processing query with model: {query.model}")
-        print(
-            f"System prompt: {query.system_prompt[:100]}..."
-        )  # Log first 100 chars of system prompt
-        print(f"Query text: {query.text[:100]}...")  # Log first 100 chars of query
-        
+        logger.info("Processing query with model: %s", query.model)
+        logger.debug("System prompt: %s...", query.system_prompt[:100])
+        logger.debug("Query text: %s...", query.text[:100])
+
         # Get max_tool_calls from the query
         max_tool_calls = query.max_tool_calls
-        print(f"Max tool calls: {max_tool_calls}")
+        logger.info("Max tool calls: %d", max_tool_calls)
 
         response = await client.process_query(
             query.system_prompt, query.text, query.model, max_tool_calls
         )
-        print(f"Query processed successfully, response length: {len(response)}")
+        logger.info("Query processed successfully, response length: %d", len(response))
         return response
     except Exception as e:
         import traceback
 
         error_trace = traceback.format_exc()
-        print(f"ERROR processing query: {str(e)}")
-        print(f"Traceback: {error_trace}")
+        logger.error("ERROR processing query: %s", str(e))
+        logger.error("Traceback: %s", error_trace)
         raise HTTPException(
             status_code=500, detail=f"{str(e)}\n\nTraceback: {error_trace}"
         )
@@ -358,7 +358,7 @@ async def call_tool(request: ToolCallRequest):
                 detail=f"Connection for server {server_name} not initialized",
             )
 
-        print(f"Calling tool: {request.tool_name} with args: {request.tool_args}")
+        logger.info("Calling tool: %s with args: %s", request.tool_name, request.tool_args)
 
         # Call the tool using the connection
         result = await connection.call_tool(request.tool_name, request.tool_args)
@@ -376,11 +376,11 @@ async def call_tool(request: ToolCallRequest):
                     content_text += item["text"] + "\n"
                 elif isinstance(item, str):
                     content_text += item + "\n"
-        print(content_text)
+        logger.info(content_text)
         return ToolCallResponse(result=content_text)
     except Exception as e:
         error_msg = f"Failed to call tool {request.tool_name}: {str(e)}"
-        print(f"Error: {error_msg}")
+        logger.error("Error: %s", error_msg)
         raise HTTPException(status_code=500, detail=error_msg)
 
 
@@ -476,7 +476,9 @@ async def remove_tool_server(server_name: str):
             if "connection" in server_info:
                 await server_info["connection"].disconnect()
         except Exception as e:
-            print(f"Warning: Error while cleaning up server {server_name}: {str(e)}")
+            logger.warning(
+                "Error while cleaning up server %s: %s", server_name, str(e)
+            )
             # Continue with removal even if cleanup fails
 
         return {"status": "success", "message": f"Removed server {server_name}"}

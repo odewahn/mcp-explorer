@@ -5,17 +5,15 @@ A clean, modular implementation for handling LLM interactions with MCP servers.
 Can be dropped into existing codebases with minimal integration effort.
 """
 
-import os
 import json
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional, Protocol
 import logging
 
-# Configure logging
-logger = logging.getLogger(__name__)
+from config import settings
 
-# Check for debug mode
-DEBUG = os.environ.get("DEBUG", "").lower() in ("true", "1", "yes", "y")
+logger = logging.getLogger(__name__)
+DEBUG = settings.debug
 
 
 @dataclass
@@ -177,7 +175,10 @@ class ResponseProcessor:
     """Processes Claude API responses and handles tool calls."""
 
     def __init__(
-        self, conversation_manager: ConversationManager, tool_manager: ToolManager, max_tool_calls: int = 5
+        self,
+        conversation_manager: ConversationManager,
+        tool_manager: ToolManager,
+        max_tool_calls: int = settings.max_tool_calls,
     ):
         self.conversation_manager = conversation_manager
         self.tool_manager = tool_manager
@@ -190,7 +191,7 @@ class ResponseProcessor:
         anthropic_client,
         system_prompt: str,
         model: str,
-        max_tokens: int = 4096,
+        max_tokens: int = settings.max_tokens,
     ) -> str:
         """
         Process the complete response from Claude, handling both text and tool calls.
@@ -402,7 +403,7 @@ class QueryProcessor:
         available_tools: List[Dict],
         tool_servers: Dict,
         existing_conversation: Optional[List[Dict]] = None,
-        max_tool_calls: int = 5,
+        max_tool_calls: int = settings.max_tool_calls,
     ):
         """
         Initialize the query processor.
@@ -433,8 +434,8 @@ class QueryProcessor:
         self,
         system_prompt: str,
         query: str,
-        model: str = "claude-3-5-sonnet-20241022",
-        max_tokens: int = 4096,
+        model: str = settings.default_model,
+        max_tokens: int = settings.max_tokens,
     ) -> str:
         """
         Process a query using Claude and available tools.
@@ -549,10 +550,10 @@ async def process_query_simple(
     query: str,
     available_tools: List[Dict],
     tool_servers: Dict,
-    model: str = "claude-3-5-sonnet-20241022",
-    max_tokens: int = 4096,
+    model: str = settings.default_model,
+    max_tokens: int = settings.max_tokens,
     conversation_history: Optional[List[Dict]] = None,
-    max_tool_calls: int = 5,
+    max_tool_calls: int = settings.max_tool_calls,
 ) -> tuple[str, List[Dict]]:
     """
     Simple function interface for processing queries.
