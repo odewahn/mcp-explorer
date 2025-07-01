@@ -1,12 +1,7 @@
-import asyncio
-import json
-import anyio
 import logging
-from typing import Optional, List, Dict, Any
-from contextlib import AsyncExitStack
-from collections import deque
-
-from anthropic import Anthropic
+import os
+import webbrowser
+from typing import List, Dict
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
