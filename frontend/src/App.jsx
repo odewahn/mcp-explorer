@@ -4,11 +4,9 @@ import InputMessage from "./InputMessage";
 import JSONView from "./JSONView";
 import MessageView from "./MessageView";
 import TextView from "./TextView";
-import SystemPrompt from "./SystemPrompt";
 
 function App() {
   const [messages, setMessages] = useState([]);
-  const [systemPrompt, setSystemPrompt] = useState("");
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
@@ -40,10 +38,6 @@ function App() {
     }
   };
 
-  // Handle system prompt changes
-  const handleSystemPromptChange = (newPrompt) => {
-    setSystemPrompt(newPrompt);
-  };
 
   return (
     <Box sx={{ 
@@ -132,7 +126,7 @@ function App() {
 
       {/* Input Message - Fixed at bottom */}
       <Box sx={{ flexShrink: 0, mt: 2 }}>
-        <InputMessage onNewMessage={loadMessages} systemPrompt={systemPrompt} />
+        <InputMessage onNewMessage={loadMessages} />
       </Box>
     </Box>
   );

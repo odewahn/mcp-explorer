@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { Typography, Box, Paper, Container, Snackbar, Alert } from "@mui/material";
 import AceEditor from "react-ace";
+import { useSystemPrompt } from "./contexts/SystemPromptContext";
 
 // Import ace modes and themes
 import "ace-builds/src-noconflict/mode-text";
@@ -8,44 +9,13 @@ import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
 
-function SystemPrompt({ onSystemPromptChange = () => {} }) {
-  const [systemPrompt, setSystemPrompt] = useState("");
+function SystemPrompt() {
+  const { systemPrompt, setSystemPrompt } = useSystemPrompt();
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  // Save system prompt to localStorage
-  const saveSystemPrompt = useCallback((prompt) => {
-    localStorage.setItem('systemPrompt', prompt);
-    setSaveSuccess(true);
-  }, []);
-
-  // Load the initial system prompt when component mounts
-  useEffect(() => {
-    // Default system prompt
-    const defaultPrompt =
-      "You are Claude, an AI assistant. Be helpful, harmless, and honest.";
-    
-    // Try to load from localStorage first
-    const savedPrompt = localStorage.getItem('systemPrompt');
-    const promptToUse = savedPrompt || defaultPrompt;
-    
-    setSystemPrompt(promptToUse);
-
-    // Notify parent component of the initial value
-    if (onSystemPromptChange) {
-      onSystemPromptChange(promptToUse);
-    }
-  }, [onSystemPromptChange]);
 
   const handleChange = (newValue) => {
     setSystemPrompt(newValue);
-    
-    // Save to localStorage
-    saveSystemPrompt(newValue);
-
-    // Notify parent component of the change
-    if (onSystemPromptChange) {
-      onSystemPromptChange(newValue);
-    }
+    setSaveSuccess(true);
   };
 
   const handleCloseSnackbar = () => {

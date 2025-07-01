@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   IconButton,
   CircularProgress,
@@ -13,13 +13,15 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import SendIcon from "@mui/icons-material/Send";
 import "./InputMessage.css";
+import { useSystemPrompt } from "./contexts/SystemPromptContext";
 
 // A react component that allows the user to type a message and then post it to
 // the messages endpoint of the server.
-function InputMessage({ onNewMessage, systemPrompt }) {
+function InputMessage({ onNewMessage }) {
   const [message, setMessage] = useState("");
   const [spinner, setSpinner] = useState(false);
   const [model, setModel] = useState("claude-3-5-sonnet-20241022");
+  const { systemPrompt } = useSystemPrompt();
 
   // Available models
   const models = [
@@ -40,6 +42,8 @@ function InputMessage({ onNewMessage, systemPrompt }) {
     setSpinner(true);
 
     try {
+      console.log("Using system prompt:", systemPrompt);
+      console.log("Sending message:", message);
       // Send the message to the server
       const response = await fetch("http://0.0.0.0:8000/query", {
         method: "POST",
@@ -48,10 +52,8 @@ function InputMessage({ onNewMessage, systemPrompt }) {
         },
         body: JSON.stringify({
           text: message,
-          model: model,
-          system_prompt:
-            systemPrompt ||
-            "You are Claude, an AI assistant. Be helpful, harmless, and honest.",
+          model,
+          system_prompt: systemPrompt,
         }),
       });
 
@@ -210,7 +212,11 @@ function InputMessage({ onNewMessage, systemPrompt }) {
           },
         }}
       >
-        {spinner ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
+        {spinner ? (
+          <CircularProgress size={24} color="inherit" />
+        ) : (
+          <SendIcon />
+        )}
       </IconButton>
 
       <IconButton
