@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import List, Dict, Any, Optional, Protocol
 import logging
 
-from config import settings
+from mcp_explorer.config import settings
 
 logger = logging.getLogger(__name__)
 DEBUG = settings.debug
