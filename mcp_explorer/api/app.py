@@ -1,12 +1,10 @@
 import logging
 from typing import List, Dict
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from mcp_explorer.core.query_processor import process_query_simple
 
 import os
 import webbrowser
