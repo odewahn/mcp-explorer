@@ -1,4 +1,3 @@
----
 # MCP Explorer
 
 An application to interact with the MCP protocol via an AI assistant (Claude) and external tools.
@@ -7,31 +6,27 @@ An application to interact with the MCP protocol via an AI assistant (Claude) an
 
 ```mermaid
 flowchart TD
-  subgraph API Layer
     API[api/app.py]
-  end
-  subgraph Routes
-    Q[/query]
-    M[/messages]
-    T[/tools]
-    Srv[/add-tool-server & more]
-  end
-
-  subgraph Client Layer
+    Q[query route]
+    M[messages route]
+    T[tools route]
+    Srv[add-tool-server route]
     C[mcp_explorer/client/mcp_client.py]
-  end
-
-  subgraph Core Layer
     QP[mcp_explorer/core/query_processor.py]
-  end
-
-  subgraph Transport Layer
     SSE[mcp_explorer/server/sse.py]
     STDIO[mcp_explorer/server/stdio.py]
-  end
 
-  API -->|routes| Routes
-  Routes -->|calls| C -->|orchestrates| QP ---|uses| SSE & STDIO
+    API --> Q
+    API --> M
+    API --> T
+    API --> Srv
+    Q --> C
+    M --> C
+    T --> C
+    Srv --> C
+    C --> QP
+    QP --> SSE
+    QP --> STDIO
 ```
 
 ## Project Layout
