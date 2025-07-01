@@ -74,6 +74,12 @@ class MCPClient:
         for server_info in self.tool_servers.values():
             self.available_tools.extend(server_info.get("tools", []))
 
+    async def refresh_tools(self) -> List[Dict[str, Any]]:
+        """Refresh and return the combined list of available tools from all servers."""
+        # Update internal tool list
+        self.refresh_available_tools()
+        return self.available_tools
+
     async def cleanup(self) -> None:
         """Disconnect all servers and clear tracking."""
         for server_info in self.tool_servers.values():
