@@ -48,6 +48,21 @@ root_dir = os.path.abspath(
 # client = MCPClient()  # removed; using shared singleton above
 
 
+# Create FastAPI app
+app = FastAPI(title="MCP Client API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(root_dir, "static"), html=True),
+    name="static",
+)
+
 @app.on_event("shutdown")
 async def shutdown_event():
     await client.cleanup()
