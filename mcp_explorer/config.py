@@ -9,6 +9,8 @@ except ImportError:
 class Settings(BaseSettings):
     """Application configuration, loaded from environment or defaults."""
 
+    version: str = "0.1.0"
+
     # Anthropic model settings
     default_model: str = "claude-3-5-sonnet-20241022"
     default_system_prompt: str = (
@@ -20,6 +22,7 @@ class Settings(BaseSettings):
     # Web interface settings
     dev_url: str = "http://localhost:5173"
     prod_url: str = "http://localhost:8000/static"
+    port: int = 8000
 
     # Logging settings
     log_file: str = "mcp_explorer.log"
