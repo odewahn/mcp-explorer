@@ -11,4 +11,10 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "pyinstaller",
+    "openai"
 ]
+
+[tool.setuptools.packages.find]
+where    = ["."]
+include  = ["mcp_explorer*"]
+exclude  = ["frontend*", "static*"]
