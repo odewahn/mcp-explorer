@@ -59,7 +59,7 @@ class STDIOServerConnection(MCPServerConnection):
             # Step 2: Initialized notification
             await self._send_notification("notifications/initialized", {})
 
-            # Step 3: List tools
+            # Step 3: List tools (unwrap the JSON-RPC envelope)
             tools_result = await self._send_request(
                 {
                     "jsonrpc": "2.0",
@@ -68,14 +68,13 @@ class STDIOServerConnection(MCPServerConnection):
                     "id": self._next_id(),
                 }
             )
-
-            # Handle tools response (allow both list or dict format)
-            if isinstance(tools_result, dict) and "tools" in tools_result:
-                self.tools = tools_result["tools"]
-            elif isinstance(tools_result, list):
-                self.tools = tools_result
+            body = tools_result.get("result") if isinstance(tools_result, dict) else None
+            if isinstance(body, dict) and "tools" in body:
+                self.tools = body["tools"]
+            elif isinstance(body, list):
+                self.tools = body
             else:
-                logger.warning("Unexpected tools list format: %s", tools_result)
+                logger.warning("Unexpected tools/list result format: %s", body)
                 self.tools = []
 
             logger.info(f"Found {len(self.tools)} tools.")
