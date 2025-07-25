@@ -71,6 +71,119 @@ function AppWrapper() {
     }
   });
 
+  // Initial setup: load config and auto-connect MCP servers
+  const [setupState, setSetupState] = useState({ status: "loading" });
+  const [config, setConfig] = useState(null);
+
+  // Fetch YAML config via API
+  useEffect(() => {
+    console.debug("AppWrapper: fetching /config endpoint");
+    fetch("http://0.0.0.0:8000/config")
+      .then((r) => {
+        console.debug("AppWrapper: /config status", r.status);
+        if (r.status === 404) throw new Error("no-config");
+        return r.json();
+      })
+      .then((cfg) => {
+        console.debug("AppWrapper: config payload", cfg);
+        setConfig(cfg);
+        setSetupState({ status: "connecting" });
+      })
+      .catch((err) => {
+        console.debug("AppWrapper: no config or error", err);
+        if (err.message === "no-config") {
+          setSetupState({ status: "done" });
+        } else {
+          console.error("AppWrapper: error fetching config", err);
+          setSetupState({ status: "error", error: err });
+        }
+      });
+  }, []);
+
+  // Auto-connect to each MCP server from config: POST once, then poll GET /tools
+  useEffect(() => {
+    if (setupState.status !== "connecting" || !config?.mcp?.length) {
+      return;
+    }
+    console.debug(
+      "AppWrapper: beginning MCP server connect phase:",
+      config.mcp
+    );
+
+    const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    async function connectServers() {
+      const results = [];
+      for (const { name, cmd } of config.mcp) {
+        let ok = false;
+        let error = "";
+
+        // 1) POST once to register the server
+        try {
+          const addRes = await fetch("http://localhost:8000/add-tool-server", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, url: cmd, server_type: "stdio" }),
+          });
+          if (!addRes.ok) {
+            error = await addRes.text();
+            console.error(`Failed to add server ${name}:`, error);
+          }
+        } catch (e) {
+          error = String(e);
+          console.error(`Exception adding server ${name}:`, e);
+        }
+
+        // 2) If registration succeeded, poll GET /tools until tool appears
+        if (!error) {
+          const maxPolls = 10;
+          for (let attempt = 1; attempt <= maxPolls; attempt++) {
+            console.debug(
+              `Polling /tools for ${name}, attempt ${attempt}/${maxPolls}`
+            );
+            try {
+              const toolsRes = await fetch("http://localhost:8000/tools");
+              if (toolsRes.ok) {
+                const { tools } = await toolsRes.json();
+                if (tools.find((t) => t.server === name)) {
+                  ok = true;
+                  break;
+                }
+              } else {
+                console.warn(
+                  `Unexpected status polling /tools: ${toolsRes.status}`
+                );
+              }
+            } catch (e) {
+              console.error("Error polling /tools:", e);
+            }
+            await delay(1000);
+          }
+        }
+
+        results.push({ name, ok, error });
+      }
+      console.debug("AppWrapper: MCP connect results:", results);
+      setSetupState({ status: "done", results });
+    }
+
+    connectServers();
+  }, [setupState.status, config]);
+
+  if (setupState.status === "loading") {
+    return <Box sx={{ p: 2 }}>Loading configuration…</Box>;
+  }
+  if (setupState.status === "connecting") {
+    return <Box sx={{ p: 2 }}>Connecting to tool servers…</Box>;
+  }
+  if (setupState.status === "error") {
+    return (
+      <Box sx={{ p: 2, color: "error.main" }}>
+        Error during setup: {String(setupState.error)}
+      </Box>
+    );
+  }
+
   return (
     <BrowserRouter>
       <RouteObserver setActivePage={setActivePage} />

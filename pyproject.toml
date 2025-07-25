@@ -11,7 +11,8 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "pyinstaller",
-    "openai"
+    "openai",
+    "pyyaml",
 ]
 
 [tool.setuptools.packages.find]

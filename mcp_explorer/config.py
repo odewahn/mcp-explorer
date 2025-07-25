@@ -1,5 +1,7 @@
 import logging
 
+logger = logging.getLogger(__name__)
+
 try:
     from pydantic import BaseSettings
 except ImportError:
@@ -29,11 +31,17 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     debug: bool = False
 
+    # Preconfigured MCP servers to auto-connect (name -> command)
+    mcp_servers: list[dict[str, str]] = []
+
     class Config:
         env_file = ".env"
 
 
 settings = Settings()
+
+# Raw contents of explorer-config.yaml if loaded via CLI
+user_config: dict | None = None
 
 
 def configure_logging() -> None:
@@ -46,3 +54,33 @@ def configure_logging() -> None:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler(), logging.FileHandler(settings.log_file)],
     )
+
+
+def load_user_config(path: str) -> None:
+    """
+    Load a YAML config file to override system prompt and preconfigure MCP servers.
+    """
+    import yaml
+
+    global user_config, settings
+    with open(path, "r") as f:
+        cfg = yaml.safe_load(f) or {}
+    user_config = cfg
+    logger.info("Loaded user config from %s: %r", path, cfg)
+
+    # Override system prompt if provided
+    if "prompt" in cfg:
+        settings.default_system_prompt = cfg["prompt"]
+        logger.info(
+            "Default system prompt overridden to: %r", settings.default_system_prompt
+        )
+
+    # Load MCP server entries: list of {name: command}
+    if "mcp" in cfg:
+        servers: list[dict[str, str]] = []
+        for item in cfg["mcp"] or []:
+            for name, cmd in item.items():
+                servers.append({"name": name, "cmd": cmd})
+        settings.mcp_servers = servers
+        logger.info("Preconfigured MCP servers: %r", settings.mcp_servers)
+

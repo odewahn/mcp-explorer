@@ -1,0 +1,5 @@
+prompt:
+  Here is my config -- it worked!
+mcp:
+  - Test Server One: python -u stdio-server.py
+  - Test Server Two: python -u stdio-server.py
