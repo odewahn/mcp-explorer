@@ -189,10 +189,10 @@ class STDIOServerConnection(MCPServerConnection):
         if self._process:
             if self._process.stdin and not self._process.stdin.is_closing():
                 try:
-                    await self._send_notification("shutdown", {})
+                    # send the JSON-RPC terminate message to allow graceful shutdown
+                    await self._send_notification("terminate", {})
                 except Exception:
                     pass
-
                 self._process.stdin.close()
 
             try:

@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
+import sys
 import webbrowser
 
 # Centralized configuration and logging
@@ -50,14 +51,51 @@ async def shutdown_event():
     await client.cleanup()
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Auto-connect to any preconfigured MCP servers from explorer-config.yaml"""
+    failed = []
+    if settings.mcp_servers:
+        logger.info("Auto-connecting to %d configured MCP servers", len(settings.mcp_servers))
+        for entry in settings.mcp_servers:
+            name = entry.get("name")
+            cmd = entry.get("cmd")
+            logger.info("Connecting to MCP server %s -> %s", name, cmd)
+            try:
+                ok = await client.connect_to_server(
+                    server_url=cmd,
+                    server_type="stdio",
+                    server_name=name,
+                )
+                if ok:
+                    logger.info("Connected to MCP server %s", name)
+                else:
+                    logger.error("Failed to connect to MCP server %s", name)
+                    failed.append((name, "connect_to_server returned False"))
+            except Exception as exc:
+                logger.exception("Error during auto-connect to MCP server %s", name)
+                failed.append((name, str(exc)))
+
+    if failed:
+        for name, err in failed:
+            logger.error("MCP server '%s' failed to start: %s", name, err)
+        os._exit(1)
+
+    # Open browser after MCP servers are connected and startup complete
+    if os.environ.get("ENV") == "dev":
+        target = settings.dev_url
+    else:
+        target = settings.prod_url
+    logger.info("Opening browser to %s", target)
+    webbrowser.open_new(target)
+
+
 def main():
-    # Check if os.environ.get("ENV") is set to "dev"
+    # Check dev vs prod URL for logging
     if os.environ.get("ENV") == "dev":
         url = settings.dev_url
     else:
         url = settings.prod_url
-    webbrowser.open_new(url)
-    # Run the FastAPI app directly (this will create its own event loop)
     logger.info(f"Starting MCP Explorer API at {url}")
     logger.info(f"Version: {settings.version}")
     logger.info(f"Logging to: {settings.log_file} at level {settings.log_level}")

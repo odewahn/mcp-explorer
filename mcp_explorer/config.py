@@ -49,11 +49,31 @@ def configure_logging() -> None:
     Configure root logger based on settings.
     """
     level = getattr(logging, settings.log_level.upper(), logging.INFO)
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler(settings.log_file)],
-    )
+
+    # Console handler with color for WARNING messages
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
+
+    class ColorFormatter(logging.Formatter):
+        """Formatter that highlights WARNING level logs in red."""
+        RED = "\033[31m"
+        RESET = "\033[0m"
+
+        def format(self, record):
+            msg = super().format(record)
+            if record.levelno == logging.WARNING:
+                return f"{self.RED}{msg}{self.RESET}"
+            return msg
+
+    log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    console_handler.setFormatter(ColorFormatter(log_format))
+
+    # File handler for persistent logs (no color)
+    file_handler = logging.FileHandler(settings.log_file)
+    file_handler.setLevel(level)
+    file_handler.setFormatter(logging.Formatter(log_format))
+
+    logging.basicConfig(level=level, handlers=[console_handler, file_handler])
 
 
 def load_user_config(path: str) -> None:
