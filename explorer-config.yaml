@@ -1,4 +1,11 @@
 prompt:
   Here is my config -- it worked pretty great!
 mcp:
-  - Test Server One: python -u stdio-server.py
+  # STDIO-based server (local process)
+  - Test Server One:
+      type: stdio
+      cmd: python -u stdio-server.py
+  # SSE server (HTTP endpoint)
+  - Date Server:
+      type: sse
+      url: http://0.0.0.0:8085/sse

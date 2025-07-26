@@ -95,12 +95,27 @@ def load_user_config(path: str) -> None:
             "Default system prompt overridden to: %r", settings.default_system_prompt
         )
 
-    # Load MCP server entries: list of {name: command}
+    # Load MCP server entries: list of name/url/type
     if "mcp" in cfg:
         servers: list[dict[str, str]] = []
         for item in cfg["mcp"] or []:
-            for name, cmd in item.items():
-                servers.append({"name": name, "cmd": cmd})
+            for name, entry in item.items():
+                if isinstance(entry, dict):
+                    cmd_or_url = entry.get("url") or entry.get("cmd", "")
+                    stype = entry.get(
+                        "type",
+                        "sse" if cmd_or_url.startswith(("http://", "https://")) else "stdio",
+                    )
+                else:
+                    cmd_or_url = entry
+                    stype = (
+                        "sse"
+                        if isinstance(entry, str) and entry.startswith(("http://", "https://"))
+                        else "stdio"
+                    )
+                servers.append(
+                    {"name": name, "url": cmd_or_url, "server_type": stype}
+                )
         settings.mcp_servers = servers
         logger.info("Preconfigured MCP servers: %r", settings.mcp_servers)
 

@@ -4,7 +4,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
-import sys
 import webbrowser
 
 # Centralized configuration and logging
@@ -59,12 +58,13 @@ async def startup_event():
         logger.info("Auto-connecting to %d configured MCP servers", len(settings.mcp_servers))
         for entry in settings.mcp_servers:
             name = entry.get("name")
-            cmd = entry.get("cmd")
-            logger.info("Connecting to MCP server %s -> %s", name, cmd)
+            url = entry.get("url")
+            stype = entry.get("server_type", "stdio")
+            logger.info("Connecting to MCP server %s -> %s (%s)", name, url, stype)
             try:
                 ok = await client.connect_to_server(
-                    server_url=cmd,
-                    server_type="stdio",
+                    server_url=url,
+                    server_type=stype,
                     server_name=name,
                 )
                 if ok:
