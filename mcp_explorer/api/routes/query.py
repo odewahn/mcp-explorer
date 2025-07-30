@@ -21,7 +21,11 @@ async def process_query(query: Query, background_tasks: BackgroundTasks):
         logger.info("Max tool calls: %d", max_tool_calls)
 
         response = await client.process_query(
-            query.system_prompt, query.text, query.model, max_tool_calls
+            system_prompt=query.system_prompt,
+            query=query.text,
+            model=query.model,
+            max_tool_calls=max_tool_calls,
+            tool_overrides=query.tool_overrides,
         )
         logger.info("Query processed successfully, response length: %d", len(response))
         return response

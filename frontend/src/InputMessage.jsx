@@ -14,6 +14,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SendIcon from "@mui/icons-material/Send";
 import "./InputMessage.css";
 import { useSystemPrompt } from "./contexts/SystemPromptContext";
+import { useToolOverrides } from "./contexts/ToolOverrideContext";
 
 // A react component that allows the user to type a message and then post it to
 // the messages endpoint of the server.
@@ -22,6 +23,7 @@ function InputMessage({ onNewMessage }) {
   const [spinner, setSpinner] = useState(false);
   const [model, setModel] = useState("claude-3-5-sonnet-20241022");
   const { systemPrompt } = useSystemPrompt();
+  const { overrides } = useToolOverrides();
 
   // Available models
   const models = [
@@ -54,6 +56,13 @@ function InputMessage({ onNewMessage }) {
           text: message,
           model,
           system_prompt: systemPrompt,
+          tool_overrides: Object.entries(overrides).flatMap(([srv, tools]) =>
+            Object.entries(tools).map(([name, description]) => ({
+              server: srv,
+              name,
+              description,
+            }))
+          ),
         }),
       });
 

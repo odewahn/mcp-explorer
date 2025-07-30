@@ -8,6 +8,7 @@ Can be dropped into existing codebases with minimal integration effort.
 import json
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional, Protocol
+from mcp_explorer.models import ToolOverride
 import logging
 
 from mcp_explorer.config import settings
@@ -141,6 +142,12 @@ class ToolManager:
             if tool["name"] == tool_name:
                 return tool.get("server")
         return None
+    
+    def apply_override(self, server: str, tool_name: str, description: str) -> None:
+        """Override a tool's description for a specific server."""
+        for tool in self.available_tools:
+            if tool.get("server") == server and tool.get("name") == tool_name:
+                tool["description"] = description
 
     async def execute_tool_call(
         self, tool_name: str, tool_args: Dict
@@ -404,6 +411,7 @@ class QueryProcessor:
         tool_servers: Dict,
         existing_conversation: Optional[List[Dict]] = None,
         max_tool_calls: int = settings.max_tool_calls,
+        tool_overrides: Optional[List[ToolOverride]] = None,
     ):
         """
         Initialize the query processor.
@@ -421,6 +429,7 @@ class QueryProcessor:
         self.response_processor = ResponseProcessor(
             self.conversation_manager, self.tool_manager, max_tool_calls
         )
+        self.tool_overrides = tool_overrides or []
 
     def get_conversation_history(self) -> List[Dict[str, Any]]:
         """Get the current conversation history."""
@@ -451,6 +460,21 @@ class QueryProcessor:
         """
         # Add user message to conversation
         self.conversation_manager.add_user_message(query)
+
+        # Merge in any tool_overrides before calling tools
+        for override in self.tool_overrides:
+            self.tool_manager.apply_override(
+                server=override.server,
+                tool_name=override.name,
+                description=override.description,
+            )
+        # Apply any user-defined tool-overrides before running
+        for override in self.tool_overrides:
+            self.tool_manager.apply_override(
+                server=override.server,
+                tool_name=override.name,
+                description=override.description,
+            )
 
         # Enhance system prompt with information about tool call limits
         enhanced_system_prompt = system_prompt
@@ -554,6 +578,7 @@ async def process_query_simple(
     max_tokens: int = settings.max_tokens,
     conversation_history: Optional[List[Dict]] = None,
     max_tool_calls: int = settings.max_tool_calls,
+    tool_overrides: Optional[List[ToolOverride]] = None,
 ) -> tuple[str, List[Dict]]:
     """
     Simple function interface for processing queries.
@@ -573,7 +598,12 @@ async def process_query_simple(
         (response_text, updated_conversation_history)
     """
     processor = QueryProcessor(
-        anthropic_client, available_tools, tool_servers, conversation_history, max_tool_calls
+        anthropic_client,
+        available_tools,
+        tool_servers,
+        conversation_history,
+        max_tool_calls,
+        tool_overrides or [],
     )
     response = await processor.process_query(system_prompt, query, model, max_tokens)
     return response, processor.get_conversation_history()

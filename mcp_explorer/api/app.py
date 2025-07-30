@@ -81,6 +81,28 @@ async def startup_event():
             logger.error("MCP server '%s' failed to start: %s", name, err)
         os._exit(1)
 
+    # Validate that config-defined server names and tool overrides match actual servers/tools
+    for entry in settings.mcp_servers:
+        cfg_name = entry["name"]
+        if cfg_name not in client.tool_servers:
+            logger.error(
+                "Configured server name '%s' not found among connected servers: %s",
+                cfg_name,
+                list(client.tool_servers.keys()),
+            )
+            os._exit(1)
+        # Validate tool overrides from config (if any)
+        for override in entry.get("tools", []):
+            tool_name = override.get("name")
+            actual = [t["name"] for t in client.tool_servers[cfg_name]["tools"]]
+            if tool_name not in actual:
+                logger.error(
+                    "Configured override for unknown tool '%s' on server '%s'",
+                    tool_name,
+                    cfg_name,
+                )
+                os._exit(1)
+
     # Open browser after MCP servers are connected and startup complete
     if os.environ.get("ENV") == "dev":
         target = settings.dev_url

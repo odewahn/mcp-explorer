@@ -41,6 +41,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CodeIcon from "@mui/icons-material/Code";
 import StorageIcon from "@mui/icons-material/Storage";
 import ToolTester from "./ToolTester";
+import { useToolOverrides } from "./contexts/ToolOverrideContext";
 import Markdown from "react-markdown";
 
 function Tools() {
@@ -61,6 +62,7 @@ function Tools() {
     severity: "info",
   });
   const [tabValue, setTabValue] = useState(0);
+  const { overrides, setOverride } = useToolOverrides();
 
   // Fetch both tools and servers on component mount
   useEffect(() => {
@@ -193,7 +195,7 @@ function Tools() {
 
   // Group tools by server
   const toolsByServer = tools.reduce((acc, tool) => {
-    const server = tool.server || "default";
+    const server = tool.server || "default-F";
     if (!acc[server]) {
       acc[server] = [];
     }
@@ -440,9 +442,27 @@ function Tools() {
                               {
                                 tool.description
                                   ?.trim()
-                                  .replace(/\n    /g, "\n") // Remove 4-space indentation
+                                  .replace(
+                                    /\n    /g,
+                                    "\n"
+                                  ) /* Remove 4-space indentation */
                               }
                             </Markdown>
+                            {/* Override description editor */}
+                            <TextField
+                              label="Override description"
+                              value={overrides[serverName]?.[tool.name] || ""}
+                              onChange={(e) =>
+                                setOverride(
+                                  serverName,
+                                  tool.name,
+                                  e.target.value
+                                )
+                              }
+                              fullWidth
+                              multiline
+                              sx={{ mt: 2, mb: 2 }}
+                            />
 
                             <Typography variant="subtitle2" gutterBottom>
                               <CodeIcon

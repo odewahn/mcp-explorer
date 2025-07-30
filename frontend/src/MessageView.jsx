@@ -594,7 +594,7 @@ function MessageView({ data }) {
                         size="small"
                         onClick={(event) => openCopyMenu(event, index)}
                         color={
-                          copiedMessageId === index ? "success" : "default"
+                          copiedMessageId === index ? "success" : "default-A"
                         }
                         aria-label="Copy options"
                       >

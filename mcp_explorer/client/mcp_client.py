@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import List, Dict, Any
 from collections import deque
 from contextlib import AsyncExitStack
@@ -23,7 +22,7 @@ class MCPClient:
         self.tool_servers: Dict[str, Any] = {}
 
     async def connect_to_server(
-        self, server_url: str, server_type: str = "sse", server_name: str = "default"
+        self, server_url: str, server_type: str = "sse", server_name: str = "default-C"
     ) -> bool:
         """Connect to an MCP server over SSE or STDIO transport."""
         if server_type.lower() == "sse":
@@ -35,7 +34,7 @@ class MCPClient:
             return False
 
     async def connect_to_sse_server(
-        self, server_url: str, server_name: str = "default"
+        self, server_url: str, server_name: str = "default-D"
     ) -> bool:
         """Connect to an MCP server running with SSE transport."""
         try:
@@ -89,7 +88,12 @@ class MCPClient:
         self.tool_servers.clear()
 
     async def process_query(
-        self, system_prompt: str, query: str, model: str, max_tool_calls: int
+        self,
+        system_prompt: str,
+        query: str,
+        model: str,
+        max_tool_calls: int,
+        tool_overrides: list = None,
     ) -> str:
         """Process a query via Claude and invoke tools as needed."""
         response, self.conversation_history = await process_query_simple(
@@ -101,11 +105,12 @@ class MCPClient:
             model=model,
             conversation_history=list(self.conversation_history),
             max_tool_calls=max_tool_calls,
+            tool_overrides=tool_overrides or [],
         )
         return response
 
     async def connect_to_stdio_server(
-        self, server_url: str, server_name: str = "default"
+        self, server_url: str, server_name: str = "default-E"
     ) -> bool:
         """Connect to an MCP server running with STDIO transport."""
         try:
@@ -141,6 +146,7 @@ class MCPClient:
         except Exception as e:
             logger.error("Error connecting to STDIO server %s: %s", server_name, e)
             return False
+
 
 # Singleton client for use by API routes
 client = MCPClient()

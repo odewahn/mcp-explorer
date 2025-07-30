@@ -97,15 +97,17 @@ def load_user_config(path: str) -> None:
 
     # Load MCP server entries: list of name/url/type
     if "mcp" in cfg:
-        servers: list[dict[str, str]] = []
+        servers: list[dict[str, str | list[dict[str, str]]]] = []
         for item in cfg["mcp"] or []:
             for name, entry in item.items():
+                # Determine URL/command and transport type
                 if isinstance(entry, dict):
                     cmd_or_url = entry.get("url") or entry.get("cmd", "")
                     stype = entry.get(
                         "type",
                         "sse" if cmd_or_url.startswith(("http://", "https://")) else "stdio",
                     )
+                    tool_list = entry.get("tools") or []
                 else:
                     cmd_or_url = entry
                     stype = (
@@ -113,8 +115,14 @@ def load_user_config(path: str) -> None:
                         if isinstance(entry, str) and entry.startswith(("http://", "https://"))
                         else "stdio"
                     )
+                    tool_list = []
                 servers.append(
-                    {"name": name, "url": cmd_or_url, "server_type": stype}
+                    {
+                        "name": name,
+                        "url": cmd_or_url,
+                        "server_type": stype,
+                        "tools": tool_list,
+                    }
                 )
         settings.mcp_servers = servers
         logger.info("Preconfigured MCP servers: %r", settings.mcp_servers)

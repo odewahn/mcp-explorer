@@ -38,14 +38,20 @@ async def add_tool_server(server: ToolServer):
 @router.get("/tool-servers", response_model=ToolServersResponse)
 async def get_tool_servers():
     """Get the list of connected tool servers"""
-    return ToolServersResponse(servers=[{"name": n, "url": info["url"]} for n, info in client.tool_servers.items()])
+    return ToolServersResponse(
+        servers=[
+            {"name": n, "url": info["url"]} for n, info in client.tool_servers.items()
+        ]
+    )
 
 
 @router.delete("/tool-server/{server_name}")
 async def remove_tool_server(server_name: str):
     """Remove a tool server"""
-    if server_name not in client.tool_servers or server_name == "default":
-        raise HTTPException(status_code=404, detail="Server not found or cannot remove default server")
+    if server_name not in client.tool_servers or server_name == "default-B":
+        raise HTTPException(
+            status_code=404, detail="Server not found or cannot remove default server"
+        )
     server_info = client.tool_servers.pop(server_name)
     client.refresh_available_tools()
     try:
