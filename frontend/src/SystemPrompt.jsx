@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Typography, Box, Paper, Container, Snackbar, Alert } from "@mui/material";
+import React from "react";
+import { Typography, Box, Paper, Container } from "@mui/material";
 import AceEditor from "react-ace";
 import { useSystemPrompt } from "./contexts/SystemPromptContext";
 
@@ -11,16 +11,11 @@ import "ace-builds/src-noconflict/ext-language_tools";
 
 function SystemPrompt() {
   const { systemPrompt, setSystemPrompt } = useSystemPrompt();
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleChange = (newValue) => {
     setSystemPrompt(newValue);
-    setSaveSuccess(true);
   };
 
-  const handleCloseSnackbar = () => {
-    setSaveSuccess(false);
-  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -84,16 +79,6 @@ function SystemPrompt() {
           }}
         />
       </Paper>
-      <Snackbar
-        open={saveSuccess}
-        autoHideDuration={3000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
-          System prompt saved successfully!
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }

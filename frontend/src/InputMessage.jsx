@@ -13,6 +13,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import SendIcon from "@mui/icons-material/Send";
 import "./InputMessage.css";
+import { API_BASE_URL } from "./apiConfig";
 import { useSystemPrompt } from "./contexts/SystemPromptContext";
 import { useToolOverrides } from "./contexts/ToolOverrideContext";
 
@@ -47,7 +48,7 @@ function InputMessage({ onNewMessage }) {
       console.log("Using system prompt:", systemPrompt);
       console.log("Sending message:", message);
       // Send the message to the server
-      const response = await fetch("http://0.0.0.0:8000/query", {
+      const response = await fetch(`${API_BASE_URL}/query`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -110,7 +111,7 @@ function InputMessage({ onNewMessage }) {
   // Function to reset the conversation history
   const resetMessages = async () => {
     try {
-      const response = await fetch("http://0.0.0.0:8000/reset-messages", {
+    const response = await fetch(`${API_BASE_URL}/reset-messages`, {
         method: "POST",
       });
 

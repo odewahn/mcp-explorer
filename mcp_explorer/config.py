@@ -40,7 +40,10 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Raw contents of explorer-config.yaml if loaded via CLI
+# Default location for user-supplied config when --config is omitted
+DEFAULT_USER_CONFIG_FILE = ".mcp-config"
+
+# Raw contents of explorer-config.yaml (or DEFAULT_USER_CONFIG_FILE) if loaded via CLI
 user_config: dict | None = None
 
 
@@ -95,35 +98,41 @@ def load_user_config(path: str) -> None:
             "Default system prompt overridden to: %r", settings.default_system_prompt
         )
 
-    # Load MCP server entries: list of name/url/type
+    # Load MCP server entries: list of dicts with explicit fields
     if "mcp" in cfg:
         servers: list[dict[str, str | list[dict[str, str]]]] = []
-        for item in cfg["mcp"] or []:
-            for name, entry in item.items():
-                # Determine URL/command and transport type
-                if isinstance(entry, dict):
-                    cmd_or_url = entry.get("url") or entry.get("cmd", "")
-                    stype = entry.get(
-                        "type",
-                        "sse" if cmd_or_url.startswith(("http://", "https://")) else "stdio",
-                    )
-                    tool_list = entry.get("tools") or []
-                else:
-                    cmd_or_url = entry
-                    stype = (
-                        "sse"
-                        if isinstance(entry, str) and entry.startswith(("http://", "https://"))
-                        else "stdio"
-                    )
-                    tool_list = []
-                servers.append(
-                    {
-                        "name": name,
-                        "url": cmd_or_url,
-                        "server_type": stype,
-                        "tools": tool_list,
-                    }
+        for entry in cfg.get("mcp") or []:
+            if not isinstance(entry, dict):
+                logger.error("Invalid MCP entry (expected dict), skipping: %r", entry)
+                continue
+            name = entry.get("name")
+            if not isinstance(name, str) or not name.strip():
+                logger.error("Missing or invalid 'name' in server entry: %r; skipping", entry)
+                continue
+            cmd_or_url = entry.get("url") or entry.get("cmd")
+            if not isinstance(cmd_or_url, str) or not cmd_or_url.strip():
+                logger.error("No 'url' or 'cmd' specified for server '%s'; skipping", name)
+                continue
+            stype = entry.get(
+                "type",
+                "sse" if cmd_or_url.startswith(("http://", "https://")) else "stdio",
+            )
+            tool_list = entry.get("tools", [])
+            if not isinstance(tool_list, list):
+                logger.error(
+                    "Invalid tools list for server '%s': expected list, got %r; using empty list",
+                    name,
+                    tool_list,
                 )
+                tool_list = []
+            servers.append(
+                {
+                    "name": name,
+                    "url": cmd_or_url,
+                    "server_type": stype,
+                    "tools": tool_list,
+                }
+            )
         settings.mcp_servers = servers
         logger.info("Preconfigured MCP servers: %r", settings.mcp_servers)
 

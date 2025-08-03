@@ -18,9 +18,13 @@ import {
 import ChatIcon from "@mui/icons-material/Chat";
 import BuildIcon from "@mui/icons-material/Build";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SaveIcon from "@mui/icons-material/Save";
 import App from "./App";
 import Tools from "./Tools";
 import SystemPrompt from "./SystemPrompt";
+import ConfigExportDialog from "./ConfigExportDialog.jsx";
+import { useSystemPrompt } from "./contexts/SystemPromptContext";
+import { useToolOverrides } from "./contexts/ToolOverrideContext";
 
 // Helper component to handle route changes
 function RouteObserver({ setActivePage }) {
@@ -71,7 +75,21 @@ function AppWrapper() {
     }
   });
 
-
+  const [exportOpen, setExportOpen] = useState(false);
+  // Prompt user if there are unsaved configuration changes
+  const { isPromptDirty, markPromptClean } = useSystemPrompt();
+  const { isOverridesDirty, markOverridesClean } = useToolOverrides();
+  const hasUnsavedChanges = isPromptDirty || isOverridesDirty;
+  useEffect(() => {
+    const handler = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedChanges]);
   return (
     <BrowserRouter>
       <RouteObserver setActivePage={setActivePage} />
@@ -86,7 +104,7 @@ function AppWrapper() {
               component="div"
               sx={{ flexGrow: 1, fontWeight: 500 }}
             >
-              Claude Client
+              MCP Explorer
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Button
@@ -159,6 +177,16 @@ function AppWrapper() {
               >
                 Tools
               </Button>
+              <Tooltip title="Export current config as YAML">
+                <Button
+                  color="inherit"
+                  startIcon={<SaveIcon />}
+                  sx={{ textTransform: "none", fontWeight: 500 }}
+                  onClick={() => setExportOpen(true)}
+                >
+                  Export Config
+                </Button>
+              </Tooltip>
             </Box>
           </Toolbar>
         </AppBar>
@@ -181,6 +209,10 @@ function AppWrapper() {
           </Routes>
         </Container>
       </Box>
+      <ConfigExportDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+      />
     </BrowserRouter>
   );
 }

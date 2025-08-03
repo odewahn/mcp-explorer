@@ -18,6 +18,7 @@ import StorageIcon from '@mui/icons-material/Storage';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import AceEditor from 'react-ace';
 import { JsonForms } from '@jsonforms/react';
+import { API_BASE_URL } from "./apiConfig";
 import { materialRenderers, materialCells } from '@jsonforms/material-renderers';
 
 // Import ace modes
@@ -51,7 +52,7 @@ function ToolTester() {
 
   const fetchServers = async () => {
     try {
-      const response = await fetch('http://0.0.0.0:8000/tool-servers');
+      const response = await fetch(`${API_BASE_URL}/tool-servers`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -67,7 +68,7 @@ function ToolTester() {
   const fetchTools = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://0.0.0.0:8000/tools');
+      const response = await fetch(`${API_BASE_URL}/tools`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -124,7 +125,7 @@ function ToolTester() {
       setExecuting(true);
       setError(null);
       
-      const response = await fetch('http://0.0.0.0:8000/call-tool', {
+      const response = await fetch(`${API_BASE_URL}/call-tool`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

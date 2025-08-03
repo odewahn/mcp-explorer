@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { API_BASE_URL } from "../apiConfig";
 
 const defaultPrompt =
   "You are Claude, an AI assistant. Be helpful, harmless, and honest.";
@@ -6,47 +7,46 @@ const defaultPrompt =
 const SystemPromptContext = createContext({
   systemPrompt: defaultPrompt,
   setSystemPrompt: () => {},
+  isPromptDirty: false,
+  markPromptClean: () => {},
 });
 
 /**
  * Provider component to wrap the app and manage system prompt state.
- * Loads from localStorage on mount, persists on update.
+ * Loads initial prompt from server-side config on mount.
+ * Tracks dirty flag when user edits the prompt.
  */
 export function SystemPromptProvider({ children }) {
   const [systemPrompt, setSystemPromptState] = useState(defaultPrompt);
+  const [isPromptDirty, setIsPromptDirty] = useState(false);
 
-  // Load system prompt: try server-side config first, then fallback to localStorage
+  // Load system prompt from server-side config (if provided)
   useEffect(() => {
-    console.debug("SystemPromptContext: fetching /config...");
-    fetch("http://0.0.0.0:8000/config")
-      .then((r) => {
-        console.debug("SystemPromptContext: /config status", r.status);
-        return r.ok ? r.json() : Promise.reject(r);
-      })
+    fetch(`${API_BASE_URL}/config`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then((cfg) => {
-        console.debug("SystemPromptContext: config payload", cfg);
         if (cfg.prompt) {
           setSystemPromptState(cfg.prompt);
-          localStorage.setItem("systemPrompt", cfg.prompt);
         }
       })
-      .catch((err) => {
-        console.debug(
-          "SystemPromptContext: no server config, falling back to localStorage",
-          err
-        );
-        const saved = localStorage.getItem("systemPrompt");
-        if (saved) setSystemPromptState(saved);
+      .catch(() => {
+        // No server config; use default prompt
       });
   }, []);
 
   const setSystemPrompt = (prompt) => {
-    localStorage.setItem("systemPrompt", prompt);
     setSystemPromptState(prompt);
+    setIsPromptDirty(true);
+  };
+
+  const markPromptClean = () => {
+    setIsPromptDirty(false);
   };
 
   return (
-    <SystemPromptContext.Provider value={{ systemPrompt, setSystemPrompt }}>
+    <SystemPromptContext.Provider
+      value={{ systemPrompt, setSystemPrompt, isPromptDirty, markPromptClean }}
+    >
       {children}
     </SystemPromptContext.Provider>
   );

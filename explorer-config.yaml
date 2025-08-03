@@ -2,16 +2,16 @@ prompt:
   Here is my config -- it worked pretty great!
 mcp:
   # STDIO-based server (local process)
-  - Test Server One:
-      type: stdio
-      cmd: python -u stdio-server.py
-      tools:
-        - name: hello_world
-          description: FARTS
+  - name: Test Server One
+    type: stdio
+    cmd: python -u stdio-server.py
+    tools:
+      - name: hello_world
+        description: FARTS
   # SSE server (HTTP endpoint)
-  - Date Server:
-      type: sse
-      url: http://0.0.0.0:8085/sse
-      tools:
-        - name: today
-          description: This is today's date but from the description override
+  - name: Date Server
+    type: sse
+    url: http://0.0.0.0:8085/sse
+    tools:
+      - name: today
+        description: This is today's date but from the description override

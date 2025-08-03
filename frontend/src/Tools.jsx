@@ -42,59 +42,20 @@ import CodeIcon from "@mui/icons-material/Code";
 import StorageIcon from "@mui/icons-material/Storage";
 import ToolTester from "./ToolTester";
 import { useToolOverrides } from "./contexts/ToolOverrideContext";
+import { useServers } from "./contexts/ServersContext";
+import { API_BASE_URL } from "./apiConfig";
 import Markdown from "react-markdown";
 
 function Tools() {
-  const [tools, setTools] = useState([]);
-  const [servers, setServers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { tools, servers, loading, refresh } = useServers();
   const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [newServer, setNewServer] = useState({
-    name: "",
-    url: "http://localhost:8192/sse",
-    server_type: "sse",
-  });
+  const [newServer, setNewServer] = useState({ name: "", url: "http://localhost:8192/sse", server_type: "sse" });
   const [expandedTool, setExpandedTool] = useState(null);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info",
-  });
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
   const [tabValue, setTabValue] = useState(0);
   const { overrides, setOverride } = useToolOverrides();
 
-  // Fetch both tools and servers on component mount
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // Fetch tools
-      const toolsResponse = await fetch("http://0.0.0.0:8000/tools");
-      if (!toolsResponse.ok) {
-        throw new Error(`HTTP error! Status: ${toolsResponse.status}`);
-      }
-      const toolsData = await toolsResponse.json();
-
-      // Fetch servers
-      const serversResponse = await fetch("http://0.0.0.0:8000/tool-servers");
-      if (!serversResponse.ok) {
-        throw new Error(`HTTP error! Status: ${serversResponse.status}`);
-      }
-      const serversData = await serversResponse.json();
-
-      setTools(toolsData.tools);
-      setServers(serversData.servers);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setError(error.message);
-      setLoading(false);
-    }
-  };
 
   const handleAddServer = async () => {
     if (!newServer.url) {
@@ -107,8 +68,8 @@ function Tools() {
     }
 
     try {
-      setLoading(true);
-      const response = await fetch("http://0.0.0.0:8000/add-tool-server", {
+      // setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/add-tool-server`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,25 +99,21 @@ function Tools() {
         });
       }
 
-      // Refresh data
-      await fetchData();
+      // Refresh context data
+      await refresh();
     } catch (error) {
       console.error("Error adding server:", error);
-      setSnackbar({
-        open: true,
-        message: error.message,
-        severity: "error",
-      });
+      setSnackbar({ open: true, message: error.message, severity: "error" });
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
 
   const handleRemoveServer = async (serverName) => {
     try {
-      setLoading(true);
+      // setLoading(true);
       const response = await fetch(
-        `http://0.0.0.0:8000/tool-server/${serverName}`,
+        `${API_BASE_URL}/tool-server/${serverName}`,
         {
           method: "DELETE",
         }
@@ -175,17 +132,13 @@ function Tools() {
         severity: "success",
       });
 
-      // Refresh data
-      await fetchData();
+      // Refresh context data
+      await refresh();
     } catch (error) {
       console.error("Error removing server:", error);
-      setSnackbar({
-        open: true,
-        message: error.message,
-        severity: "error",
-      });
+      setSnackbar({ open: true, message: error.message, severity: "error" });
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
 
@@ -434,56 +387,44 @@ function Tools() {
                         unmountOnExit
                       >
                         <Box sx={{ pl: 4, pr: 2, pb: 2 }}>
-                          <Paper
-                            variant="outlined"
-                            sx={{ p: 2, bgcolor: "#f5f5f5" }}
-                          >
+                          <Typography variant="subtitle2" gutterBottom>
+                            Original description
+                          </Typography>
+                          <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: "#f5f5f5" }}>
                             <Markdown>
-                              {
-                                tool.description
-                                  ?.trim()
-                                  .replace(
-                                    /\n    /g,
-                                    "\n"
-                                  ) /* Remove 4-space indentation */
-                              }
+                              {tool.description?.trim().replace(/\n    /g, "\n")}
                             </Markdown>
-                            {/* Override description editor */}
-                            <TextField
-                              label="Override description"
-                              value={overrides[serverName]?.[tool.name] || ""}
-                              onChange={(e) =>
-                                setOverride(
-                                  serverName,
-                                  tool.name,
-                                  e.target.value
-                                )
-                              }
-                              fullWidth
-                              multiline
-                              sx={{ mt: 2, mb: 2 }}
-                            />
-
-                            <Typography variant="subtitle2" gutterBottom>
-                              <CodeIcon
-                                fontSize="small"
-                                sx={{ verticalAlign: "middle", mr: 1 }}
-                              />
-                              Input Schema:
-                            </Typography>
-                            <pre
-                              style={{
-                                overflowX: "auto",
-                                overflowY: "auto",
-                                maxHeight: "300px",
-                                whiteSpace: "pre-wrap",
-                                wordBreak: "break-word",
-                                fontSize: "0.875rem",
-                              }}
-                            >
-                              {JSON.stringify(tool.input_schema, null, 2)}
-                            </pre>
                           </Paper>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Override description
+                          </Typography>
+                          <TextField
+                            label="Override description"
+                            value={overrides[serverName]?.[tool.name] || ""}
+                            onChange={(e) =>
+                              setOverride(serverName, tool.name, e.target.value)
+                            }
+                            fullWidth
+                            multiline
+                            sx={{ mt: 1, mb: 2 }}
+                          />
+
+                          <Typography variant="subtitle2" gutterBottom>
+                            <CodeIcon fontSize="small" sx={{ verticalAlign: "middle", mr: 1 }} />
+                            Input Schema:
+                          </Typography>
+                          <pre
+                            style={{
+                              overflowX: "auto",
+                              overflowY: "auto",
+                              maxHeight: "300px",
+                              whiteSpace: "pre-wrap",
+                              wordBreak: "break-word",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            {JSON.stringify(tool.input_schema, null, 2)}
+                          </pre>
                         </Box>
                       </Collapse>
                       {index < serverTools.length - 1 && <Divider />}

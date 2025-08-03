@@ -6,6 +6,7 @@ import theme from "./theme";
 import "./index.css";
 import { SystemPromptProvider } from "./contexts/SystemPromptContext";
 import { ToolOverrideProvider } from "./contexts/ToolOverrideContext";
+import { ServersProvider } from "./contexts/ServersContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -13,7 +14,9 @@ createRoot(document.getElementById("root")).render(
       <CssBaseline />
       <SystemPromptProvider>
         <ToolOverrideProvider>
-          <AppWrapper />
+          <ServersProvider>
+            <AppWrapper />
+          </ServersProvider>
         </ToolOverrideProvider>
       </SystemPromptProvider>
     </ThemeProvider>

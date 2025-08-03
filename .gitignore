@@ -13,3 +13,4 @@ node_modules/
 .venv
 .aider*
 *.log
+tim.yaml

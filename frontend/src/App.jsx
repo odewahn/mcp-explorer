@@ -4,6 +4,7 @@ import InputMessage from "./InputMessage";
 import JSONView from "./JSONView";
 import MessageView from "./MessageView";
 import TextView from "./TextView";
+import { API_BASE_URL } from "./apiConfig";
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -28,7 +29,7 @@ function App() {
   const loadMessages = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://0.0.0.0:8000/messages");
+      const response = await fetch(`${API_BASE_URL}/messages`);
       const data = await response.json();
       setMessages(data);
     } catch (error) {

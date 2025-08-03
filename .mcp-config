@@ -1,0 +1,18 @@
+prompt: |-
+  ALL I WANNA DO IS TELL YOU YOU DATES.
+
+
+
+
+  DAAAAAAATTTTTTEES.
+mcp:
+  - name: Date Server
+    type: sse
+    url: http://0.0.0.0:8085/sse
+    tools:
+      - name: today
+        description: ''
+      - name: month_in_words
+        description: |
+
+          Return the current month in words.
