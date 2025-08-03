@@ -25,9 +25,12 @@ export function ToolOverrideProvider({ children }) {
         const initial = {};
         (cfg.mcp || []).forEach((srv) => {
           const serverName = srv.name;
-          if (!initial[serverName]) initial[serverName] = {};
           (srv.tools || []).forEach((t) => {
-            initial[serverName][t.name] = t.description;
+            const desc = t.description;
+            if (typeof desc === 'string' && desc.trim()) {
+              if (!initial[serverName]) initial[serverName] = {};
+              initial[serverName][t.name] = desc;
+            }
           });
         });
         setOverridesState(initial);

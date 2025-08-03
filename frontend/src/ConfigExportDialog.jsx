@@ -20,11 +20,10 @@ export default function ConfigExportDialog({ open, onClose }) {
   const { overrides, markOverridesClean } = useToolOverrides();
   const { systemPrompt, markPromptClean } = useSystemPrompt();
 
-  const { servers, tools, loading } = useServers();
+  const { servers } = useServers();
   useEffect(() => {
     if (!open) return;
     console.debug("ConfigExportDialog: servers:", servers);
-    console.debug("ConfigExportDialog: tools:", tools);
     console.debug("ConfigExportDialog: overrides:", overrides);
     console.debug("ConfigExportDialog: systemPrompt:", systemPrompt);
 
@@ -35,20 +34,16 @@ export default function ConfigExportDialog({ open, onClose }) {
         name: srv.name,
         type: srv.url.startsWith("http") ? "sse" : "stdio",
         url: srv.url,
-        tools: tools
-          .filter((t) => t.server === srv.name)
-          .map((t) => ({
-            name: t.name,
-            description:
-              overrides[srv.name]?.[t.name] ?? t.description,
-          })),
+        tools: Object.entries(overrides[srv.name] || {})
+          .filter(([, desc]) => typeof desc === 'string' && desc.trim() !== '')
+          .map(([name, description]) => ({ name, description })),
       })),
     };
     console.debug("ConfigExportDialog: merged config object:", cfgObj);
     const yaml = YAML.dump(cfgObj);
     console.debug("ConfigExportDialog: generated YAML:", yaml);
     setYamlText(yaml);
-  }, [open, servers, tools, overrides, systemPrompt]);
+  }, [open, servers, overrides, systemPrompt]);
 
   const handleDownload = () => {
     const blob = new Blob([yamlText || ""], { type: "text/yaml" });
