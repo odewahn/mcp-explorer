@@ -1,573 +1,179 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
+  Grid,
   Typography,
-  Paper,
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  ListItemButton,
-  Collapse,
-  Divider,
   CircularProgress,
-  TextField,
-  Button,
   Dialog,
-  DialogActions,
+  DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogTitle,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
-  IconButton,
-  Alert,
-  Snackbar,
-  Tabs,
-  Tab,
-  Select,
-  MenuItem,
+  DialogActions,
+  Button,
+  TextField,
   FormControl,
   InputLabel,
+  Select,
+  MenuItem,
   FormHelperText,
 } from "@mui/material";
 
-import BuildIcon from "@mui/icons-material/Build";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import CodeIcon from "@mui/icons-material/Code";
-import StorageIcon from "@mui/icons-material/Storage";
-import ToolTester from "./ToolTester";
-import { useToolOverrides } from "./contexts/ToolOverrideContext";
+import ServerTree from "./ServerTree";
+import ToolDetail from "./ToolDetail";
 import { useServers } from "./contexts/ServersContext";
+import { useToolOverrides } from "./contexts/ToolOverrideContext";
 import { API_BASE_URL } from "./apiConfig";
-import Markdown from "react-markdown";
 
-function Tools() {
-  const { tools, servers, loading, refresh } = useServers();
-  const [error, setError] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [newServer, setNewServer] = useState({ name: "", url: "http://localhost:8192/sse", server_type: "sse" });
-  const [expandedTool, setExpandedTool] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
-  const [tabValue, setTabValue] = useState(0);
-  const { overrides, setOverride } = useToolOverrides();
+export default function Tools() {
+  const { servers, tools, loading, refresh } = useServers();
+  const { overrides, setOverride, isOverridesDirty, markOverridesClean } = useToolOverrides();
 
+  // Selection & expansion state
+  const [selectedServer, setSelectedServer] = useState(null);
+  const [selectedTool, setSelectedTool] = useState(null);
 
-  const handleAddServer = async () => {
-    if (!newServer.url) {
-      setSnackbar({
-        open: true,
-        message: "Server URL is required",
-        severity: "error",
-      });
-      return;
+  // Add-server dialog state
+  const [openAdd, setOpenAdd] = useState(false);
+  const [newServer, setNewServer] = useState({
+    name: "",
+    url: "http://localhost:8192/sse",
+    server_type: "sse",
+  });
+  const [adding, setAdding] = useState(false);
+
+  // Auto-select first server/tool on load
+  useEffect(() => {
+    if (!selectedServer && servers.length > 0) {
+      const first = servers[0].name;
+      setSelectedServer(first);
+      const list = tools.filter((t) => t.server === first);
+      if (list.length) setSelectedTool(list[0].name);
     }
+  }, [servers, tools]);
 
-    try {
-      // setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/add-tool-server`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newServer),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to add server");
-      }
-
-      setSnackbar({
-        open: true,
-        message: `Server ${newServer.name} added successfully`,
-        severity: "success",
-      });
-      setOpenDialog(false);
-      setNewServer({ name: "", url: "" });
-
-      // Show a message about auto-generated name if none was provided
-      if (!newServer.name) {
-        setSnackbar({
-          open: true,
-          message: "Server added with auto-generated name",
-          severity: "info",
-        });
-      }
-
-      // Refresh context data
-      await refresh();
-    } catch (error) {
-      console.error("Error adding server:", error);
-      setSnackbar({ open: true, message: error.message, severity: "error" });
-    } finally {
-      // setLoading(false);
-    }
-  };
-
-  const handleRemoveServer = async (serverName) => {
-    try {
-      // setLoading(true);
-      const response = await fetch(
-        `${API_BASE_URL}/tool-server/${serverName}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.detail || `Failed to remove server ${serverName}`
-        );
-      }
-
-      setSnackbar({
-        open: true,
-        message: `Server ${serverName} removed successfully`,
-        severity: "success",
-      });
-
-      // Refresh context data
-      await refresh();
-    } catch (error) {
-      console.error("Error removing server:", error);
-      setSnackbar({ open: true, message: error.message, severity: "error" });
-    } finally {
-      // setLoading(false);
-    }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  // Group tools by server
-  const toolsByServer = tools.reduce((acc, tool) => {
-    const server = tool.server || "default-F";
-    if (!acc[server]) {
-      acc[server] = [];
-    }
-    acc[server].push(tool);
+  // Group tools by server for tree and detail lookup
+  const toolsByServer = tools.reduce((acc, t) => {
+    (acc[t.server] = acc[t.server] || []).push(t);
     return acc;
   }, {});
 
-  if (loading && tools.length === 0) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  // Add a new server via API
+  const handleAddServer = async () => {
+    if (!newServer.url.trim()) return;
+    setAdding(true);
+    try {
+      const resp = await fetch(`${API_BASE_URL}/add-tool-server`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newServer),
+      });
+      if (!resp.ok) {
+        const data = await resp.json();
+        throw new Error(data.detail || "Failed to add server");
+      }
+      await refresh();
+      setOpenAdd(false);
+      setNewServer({ name: "", url: "", server_type: "sse" });
+    } catch (e) {
+      alert(`Error adding server: ${e.message}`);
+    } finally {
+      setAdding(false);
+    }
+  };
 
-  if (error && tools.length === 0) {
-    return (
-      <Paper sx={{ p: 3, mt: 2, backgroundColor: "#ffebee" }}>
-        <Typography variant="h6" color="error">
-          Error loading tools
-        </Typography>
-        <Typography>{error}</Typography>
-      </Paper>
-    );
-  }
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
+  // Remove a server via API
+  const handleRemoveServer = async (srv) => {
+    try {
+      const resp = await fetch(`${API_BASE_URL}/tool-server/${srv}`, { method: "DELETE" });
+      if (!resp.ok) throw new Error((await resp.json()).detail || "Failed to remove server");
+      await refresh();
+      if (srv === selectedServer) setSelectedServer(null), setSelectedTool(null);
+    } catch (e) {
+      alert(`Error removing server: ${e.message}`);
+    }
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        overflow: "hidden",
-      }}
-    >
-      <Box
-        sx={{
-          borderBottom: 1,
-          borderColor: "#e0e0e0",
-          mb: 2,
-          backgroundColor: "#ffffff",
-          borderRadius: "4px 4px 0 0",
-          px: 2,
-        }}
-      >
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          aria-label="tool tabs"
-          sx={{
-            "& .MuiTabs-indicator": {
-              backgroundColor: "#1976d2",
-              height: 3,
-            },
+    <Grid container spacing={2} sx={{ width: '95vw', mx: 'auto', height: '100%' }}>
+      {/* 1/3 left column */}
+      <Grid item xs={12} md={4}>
+        <ServerTree
+          servers={servers}
+          toolsByServer={toolsByServer}
+          loading={loading}
+          selectedTool={selectedTool}
+          onSelectTool={(srv, t) => {
+            setSelectedServer(srv);
+            setSelectedTool(t);
           }}
-        >
-          <Tab
-            label="Tool Servers"
-            sx={{
-              textTransform: "none",
-              fontWeight: 500,
-              fontSize: "0.9rem",
-            }}
-          />
-          <Tab
-            label="Test Tools"
-            sx={{
-              textTransform: "none",
-              fontWeight: 500,
-              fontSize: "0.9rem",
-            }}
-          />
-        </Tabs>
-      </Box>
-
-      {tabValue === 0 ? (
-        <Box sx={{ overflow: "auto", flexGrow: 1 }}>
-          <Typography variant="h4" gutterBottom>
-            Tool Servers
-          </Typography>
-
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
-            <Typography variant="body1">
-              Manage the tool servers that Claude can connect to.
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setOpenDialog(true)}
-              disabled={loading}
-              sx={{
-                padding: "8px 16px",
-                textTransform: "none",
-                fontWeight: 500,
-              }}
-            >
-              Add Server
+          onAddServer={() => setOpenAdd(true)}
+          onRemoveServer={handleRemoveServer}
+        />
+        <Dialog open={openAdd} onClose={() => setOpenAdd(false)}>
+          <DialogTitle>Add Tool Server</DialogTitle>
+          <DialogContent>
+            <DialogContentText>Enter MCP tool-server details:</DialogContentText>
+            <FormControl fullWidth margin="dense">
+              <InputLabel id="server-type-label">Server Type</InputLabel>
+              <Select
+                labelId="server-type-label"
+                value={newServer.server_type}
+                onChange={(e) =>
+                  setNewServer((p) => ({ ...p, server_type: e.target.value }))
+                }
+                label="Server Type"
+              >
+                <MenuItem value="sse">SSE</MenuItem>
+                <MenuItem value="stdio">STDIO</MenuItem>
+              </Select>
+              <FormHelperText>
+                {newServer.server_type === 'stdio'
+                  ? 'Command for STDIO server'
+                  : 'URL for SSE endpoint'}
+              </FormHelperText>
+            </FormControl>
+            <TextField
+              autoFocus
+              margin="dense"
+              label={newServer.server_type === 'stdio' ? 'Command' : 'URL'}
+              fullWidth
+              variant="outlined"
+              value={newServer.url}
+              onChange={(e) => setNewServer((p) => ({ ...p, url: e.target.value }))}
+            />
+            <TextField
+              margin="dense"
+              label="Server Name (optional)"
+              fullWidth
+              variant="outlined"
+              value={newServer.name}
+              onChange={(e) => setNewServer((p) => ({ ...p, name: e.target.value }))}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenAdd(false)}>Cancel</Button>
+            <Button onClick={handleAddServer} disabled={adding} variant="contained">
+              {adding ? 'Adding…' : 'Add'}
             </Button>
+          </DialogActions>
+        </Dialog>
+      </Grid>
+
+      {/* 2/3 right column */}
+      <Grid item xs={12} md={8} sx={{ overflowY: 'auto' }}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <CircularProgress />
           </Box>
-
-          {/* Servers List */}
-          <Paper elevation={2} sx={{ mb: 4 }}>
-            <List>
-              {servers.length === 0 ? (
-                <ListItem>
-                  <ListItemText primary="No servers connected" />
-                </ListItem>
-              ) : (
-                servers.map((server, index) => (
-                  <Box key={server.name}>
-                    <ListItem
-                      secondaryAction={
-                        server.name !== "default" && (
-                          <IconButton
-                            edge="end"
-                            aria-label="delete"
-                            onClick={() => handleRemoveServer(server.name)}
-                            disabled={loading}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        )
-                      }
-                    >
-                      <ListItemIcon>
-                        <StorageIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={server.name}
-                        secondary={server.url}
-                        primaryTypographyProps={{ fontWeight: "bold" }}
-                      />
-                    </ListItem>
-                    {index < servers.length - 1 && <Divider />}
-                  </Box>
-                ))
-              )}
-            </List>
-          </Paper>
-
-          <Typography variant="h4" gutterBottom>
-            Available Tools
-          </Typography>
-          <Typography variant="body1" paragraph>
-            These are the tools that Claude can use when responding to your
-            queries.
-          </Typography>
-
-          {/* Tools List Grouped by Server */}
-          {Object.entries(toolsByServer).map(([serverName, serverTools]) => (
-            <Accordion key={serverName} sx={{ mb: 2 }} defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: "bold" }}>
-                  {serverName}{" "}
-                  <Chip
-                    size="small"
-                    label={`${serverTools.length} tools`}
-                    sx={{ ml: 1 }}
-                  />
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-                  {serverTools.map((tool, index) => (
-                    <Box key={tool.name}>
-                      <ListItemButton
-                        onClick={() =>
-                          setExpandedTool(
-                            expandedTool === tool.name ? null : tool.name
-                          )
-                        }
-                      >
-                        <ListItemIcon>
-                          <BuildIcon />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                              }}
-                            >
-                              <Typography sx={{ fontWeight: "bold" }}>
-                                {tool.name}
-                              </Typography>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTabValue(1);
-                                  // Store the tool name in sessionStorage to be used by ToolTester
-                                  sessionStorage.setItem(
-                                    "selectedTool",
-                                    tool.name
-                                  );
-                                }}
-                                sx={{
-                                  padding: "4px 12px",
-                                  textTransform: "none",
-                                  fontWeight: 500,
-                                  marginRight: "12px",
-                                }}
-                              >
-                                Test
-                              </Button>
-                            </Box>
-                          }
-                        />
-                        <ExpandMoreIcon
-                          sx={{
-                            transform:
-                              expandedTool === tool.name
-                                ? "rotate(180deg)"
-                                : "rotate(0)",
-                            transition: "0.3s",
-                          }}
-                        />
-                      </ListItemButton>
-                      <Collapse
-                        in={expandedTool === tool.name}
-                        timeout="auto"
-                        unmountOnExit
-                      >
-                        <Box sx={{ pl: 4, pr: 2, pb: 2 }}>
-                          <Typography variant="subtitle2" gutterBottom>
-                            Original description
-                          </Typography>
-                          <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: "#f5f5f5" }}>
-                            <Markdown>
-                              {tool.description?.trim().replace(/\n    /g, "\n")}
-                            </Markdown>
-                          </Paper>
-                          <Typography variant="subtitle2" gutterBottom>
-                            Override description
-                          </Typography>
-                          <TextField
-                            label="Override description"
-                            value={overrides[serverName]?.[tool.name] || ""}
-                            onChange={(e) =>
-                              setOverride(serverName, tool.name, e.target.value)
-                            }
-                            fullWidth
-                            multiline
-                            sx={{ mt: 1, mb: 2 }}
-                          />
-
-                          <Typography variant="subtitle2" gutterBottom>
-                            <CodeIcon fontSize="small" sx={{ verticalAlign: "middle", mr: 1 }} />
-                            Input Schema:
-                          </Typography>
-                          <pre
-                            style={{
-                              overflowX: "auto",
-                              overflowY: "auto",
-                              maxHeight: "300px",
-                              whiteSpace: "pre-wrap",
-                              wordBreak: "break-word",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            {JSON.stringify(tool.input_schema, null, 2)}
-                          </pre>
-                        </Box>
-                      </Collapse>
-                      {index < serverTools.length - 1 && <Divider />}
-                    </Box>
-                  ))}
-                </List>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-
-          {/* Add Server Dialog */}
-          <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-            <DialogTitle>Add Tool Server</DialogTitle>
-            <DialogContent>
-              <DialogContentText>
-                Enter the URL of the MCP tool server you want to connect to.
-              </DialogContentText>
-              <FormControl fullWidth margin="dense">
-                <InputLabel id="server-type-label">Server Type</InputLabel>
-                <Select
-                  labelId="server-type-label"
-                  id="server-type"
-                  value={newServer.server_type || "sse"}
-                  label="Server Type"
-                  onChange={(e) => {
-                    const server_type = e.target.value;
-                    setNewServer({
-                      ...newServer,
-                      server_type,
-                      url:
-                        server_type === "stdio"
-                          ? "python -u stdio-server.py"
-                          : "http://localhost:8192/sse",
-                    });
-                  }}
-                >
-                  <MenuItem value="sse">SSE</MenuItem>
-                  <MenuItem value="stdio">STDIO</MenuItem>
-                </Select>
-                <FormHelperText>
-                  {newServer.server_type === "stdio"
-                    ? "STDIO servers run as a subprocess with stdin/stdout communication"
-                    : "SSE servers use Server-Sent Events over HTTP"}
-                </FormHelperText>
-              </FormControl>
-
-              <TextField
-                autoFocus
-                margin="dense"
-                id="url"
-                label={
-                  newServer.server_type === "stdio"
-                    ? "Command to Execute"
-                    : "Server URL"
-                }
-                type={newServer.server_type === "stdio" ? "text" : "url"}
-                fullWidth
-                variant="outlined"
-                value={newServer.url}
-                onChange={(e) =>
-                  setNewServer({ ...newServer, url: e.target.value })
-                }
-                placeholder={
-                  newServer.server_type === "stdio"
-                    ? "python -u stdio-server.py"
-                    : "http://localhost:8192/sse"
-                }
-                helperText={
-                  newServer.server_type === "stdio"
-                    ? "The command to execute the STDIO server (e.g., 'python server.py')"
-                    : "The URL should point to the SSE endpoint of the MCP server"
-                }
-              />
-              <TextField
-                margin="dense"
-                id="name"
-                label="Server Name (Optional)"
-                type="text"
-                fullWidth
-                variant="outlined"
-                value={newServer.name}
-                onChange={(e) =>
-                  setNewServer({ ...newServer, name: e.target.value })
-                }
-                sx={{ mt: 2 }}
-                helperText="Leave blank to auto-generate a name"
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={() => setOpenDialog(false)}
-                sx={{
-                  padding: "6px 16px",
-                  textTransform: "none",
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleAddServer}
-                variant="contained"
-                disabled={loading || !newServer.url}
-                sx={{
-                  padding: "6px 16px",
-                  textTransform: "none",
-                  fontWeight: 500,
-                }}
-              >
-                {loading ? <CircularProgress size={24} /> : "Add Server"}
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          {/* Snackbar for notifications */}
-          <Snackbar
-            open={snackbar.open}
-            autoHideDuration={6000}
-            onClose={handleCloseSnackbar}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          >
-            <Alert
-              onClose={handleCloseSnackbar}
-              severity={snackbar.severity}
-              sx={{ width: "100%" }}
-            >
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "auto",
-          }}
-        >
-          <ToolTester />
-        </Box>
-      )}
-    </Box>
+        ) : selectedTool && selectedServer ? (
+          <ToolDetail
+            server={selectedServer}
+            toolName={selectedTool}
+            toolsByServer={toolsByServer}
+          />
+        ) : (
+          <Typography>Select a tool on the left to view details and test.</Typography>
+        )}
+      </Grid>
+    </Grid>
   );
 }
-
-export default Tools;

@@ -191,14 +191,16 @@ function AppWrapper() {
           </Toolbar>
         </AppBar>
         <Container
+          maxWidth={false}
+          disableGutters
           sx={{
             mt: 2,
             pb: 2,
             flexGrow: 1,
             display: "flex",
             flexDirection: "column",
-            overflow: "hidden", // Prevent container from scrolling
-            height: "calc(100% - 64px)", // Subtract AppBar height
+            overflow: "hidden",
+            height: "calc(100% - 64px)",
           }}
         >
           <Routes>

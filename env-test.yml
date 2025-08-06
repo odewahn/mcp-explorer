@@ -1,0 +1,10 @@
+prompt:
+  Here is my config -- it worked pretty great!
+mcp:
+  # STDIO-based server (local process)
+  - name: Test Server One
+    type: stdio
+    cmd: python -u stdio-server.py
+    tools:
+      - name: hello_world
+        description: FARTS

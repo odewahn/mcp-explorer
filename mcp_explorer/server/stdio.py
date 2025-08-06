@@ -3,6 +3,7 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 from mcp.types import CallToolResult
+import os
 
 
 from .base import MCPServerConnection
@@ -17,6 +18,46 @@ class STDIOServerConnection(MCPServerConnection):
         self._request_id = 0
         self.tools = []
 
+    # Helper function to create environment variables for subprocess
+    """
+    def create_env(self, additional_vars=None):
+        env = os.environ.copy()
+        if additional_vars:
+            env.update(additional_vars)
+        return env
+    """
+
+    def create_env(self, additional_vars=None):
+        """Create environment with only safe, allowed variables"""
+        # Essential system variables that are usually safe to pass
+        safe_system_vars = [
+            "PATH",
+            "HOME",
+            "USER",
+            "SHELL",
+            "TERM",
+            "LANG",
+            "LC_ALL",
+            "TZ",
+            "PWD",
+            "TMPDIR",
+            "TEMP",
+            "TMP",
+        ]
+
+        env = {}
+
+        # Add safe system variables
+        for var in safe_system_vars:
+            if var in os.environ:
+                env[var] = os.environ[var]
+
+        # Add your specific variables
+        if additional_vars:
+            env.update(additional_vars)
+
+        return env
+
     async def connect(self, server_url: str) -> bool:
         try:
             cmd_parts = server_url.split()
@@ -30,6 +71,7 @@ class STDIOServerConnection(MCPServerConnection):
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                env=self.create_env({"X-API-KEY": "xxx"}),
             )
 
             asyncio.create_task(self._log_stderr())
@@ -68,7 +110,9 @@ class STDIOServerConnection(MCPServerConnection):
                     "id": self._next_id(),
                 }
             )
-            body = tools_result.get("result") if isinstance(tools_result, dict) else None
+            body = (
+                tools_result.get("result") if isinstance(tools_result, dict) else None
+            )
             if isinstance(body, dict) and "tools" in body:
                 self.tools = body["tools"]
             elif isinstance(body, list):
