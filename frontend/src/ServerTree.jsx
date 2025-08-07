@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -11,11 +11,13 @@ import {
   Divider,
   Typography,
   Paper,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
 import StorageIcon from "@mui/icons-material/Storage";
 import BuildIcon from "@mui/icons-material/Build";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 /**
  * ServerTree renders the "Add Server" button and a nested list of servers/tools.
@@ -28,7 +30,20 @@ export default function ServerTree({
   onSelectTool,
   onAddServer,
   onRemoveServer,
+  onRenameServer,
 }) {
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [menuServer, setMenuServer] = useState(null);
+
+  const handleMenuOpen = (event, serverName) => {
+    setMenuAnchorEl(event.currentTarget);
+    setMenuServer(serverName);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setMenuServer(null);
+  };
   return (
     <>
       <Box
@@ -63,13 +78,41 @@ export default function ServerTree({
                   sx={{ backgroundColor: 'grey.100' }}
                   secondaryAction={
                     srv.name !== "default" && (
-                      <IconButton
-                        edge="end"
-                        onClick={() => onRemoveServer(srv.name)}
-                        disabled={loading}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <>
+                        <IconButton
+                          edge="end"
+                          onClick={(e) => handleMenuOpen(e, srv.name)}
+                          disabled={loading}
+                        >
+                          <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={menuAnchorEl}
+                          open={Boolean(menuAnchorEl && menuServer === srv.name)}
+                          onClose={handleMenuClose}
+                        >
+                          <MenuItem
+                            onClick={() => {
+                              onRenameServer(srv.name);
+                              handleMenuClose();
+                            }}
+                          >
+                            Rename
+                          </MenuItem>
+                          <MenuItem disabled>Restart</MenuItem>
+                          <MenuItem disabled>Add API Keys</MenuItem>
+                          <Divider />
+                          <MenuItem
+                            onClick={() => {
+                              onRemoveServer(srv.name);
+                              handleMenuClose();
+                            }}
+                            disabled={loading}
+                          >
+                            Delete
+                          </MenuItem>
+                        </Menu>
+                      </>
                     )
                   }
                 >

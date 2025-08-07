@@ -7,6 +7,7 @@ const ToolOverrideContext = createContext({
   setOverride: () => {},
   isOverridesDirty: false,
   markOverridesClean: () => {},
+  renameServer: () => {},
 });
 
 /**
@@ -50,13 +51,26 @@ export function ToolOverrideProvider({ children }) {
     setIsOverridesDirty(true);
   }
 
+  // Rename overrides mapping when a server is renamed
+  function renameServer(oldName, newName) {
+    setOverridesState((prev) => {
+      const next = { ...prev };
+      if (prev[oldName] !== undefined) {
+        next[newName] = prev[oldName];
+        delete next[oldName];
+      }
+      return next;
+    });
+    setIsOverridesDirty(true);
+  }
+
   const markOverridesClean = () => {
     setIsOverridesDirty(false);
   };
 
   return (
     <ToolOverrideContext.Provider
-      value={{ overrides, setOverride, isOverridesDirty, markOverridesClean }}
+      value={{ overrides, setOverride, isOverridesDirty, markOverridesClean, renameServer }}
     >
       {children}
     </ToolOverrideContext.Provider>

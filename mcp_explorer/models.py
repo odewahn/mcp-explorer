@@ -67,6 +67,11 @@ class ToolServersResponse(BaseModel):
     servers: List[Dict[str, str]]
 
 
+class RenameServerRequest(BaseModel):
+    """Request body for renaming a tool server."""
+    new_name: str
+
+
 class ToolCallRequest(BaseModel):
     tool_name: str
     tool_args: Dict[str, Any]

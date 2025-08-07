@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
+  Box,
   Grid,
   Typography,
   CircularProgress,
@@ -25,7 +26,7 @@ import { API_BASE_URL } from "./apiConfig";
 
 export default function Tools() {
   const { servers, tools, loading, refresh } = useServers();
-  const { overrides, setOverride, isOverridesDirty, markOverridesClean } = useToolOverrides();
+  const { overrides, setOverride, isOverridesDirty, markOverridesClean, renameServer } = useToolOverrides();
 
   // Selection & expansion state
   const [selectedServer, setSelectedServer] = useState(null);
@@ -92,6 +93,47 @@ export default function Tools() {
     }
   };
 
+  const [openRename, setOpenRename] = useState(false);
+  const [renameOldServer, setRenameOldServer] = useState(null);
+  const [renameNewName, setRenameNewName] = useState("");
+
+  const handleOpenRename = (srv) => {
+    setRenameOldServer(srv);
+    setRenameNewName(srv);
+    setOpenRename(true);
+  };
+  const handleCloseRename = () => {
+    setOpenRename(false);
+    setRenameOldServer(null);
+    setRenameNewName("");
+  };
+  const handleConfirmRename = async () => {
+    if (!renameNewName.trim()) return;
+    try {
+      const resp = await fetch(
+        `${API_BASE_URL}/tool-server/${renameOldServer}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ new_name: renameNewName }),
+        }
+      );
+      if (!resp.ok) {
+        const data = await resp.json();
+        throw new Error(data.detail || "Failed to rename server");
+      }
+      await refresh();
+      // Update overrides mapping to match the renamed server
+      renameServer(renameOldServer, renameNewName);
+      if (selectedServer === renameOldServer) {
+        setSelectedServer(renameNewName);
+      }
+      handleCloseRename();
+    } catch (e) {
+      alert(`Error renaming server: ${e.message}`);
+    }
+  };
+
   return (
     <Grid container spacing={2} sx={{ width: '95vw', mx: 'auto', height: '100%' }}>
       {/* 1/3 left column */}
@@ -106,7 +148,8 @@ export default function Tools() {
             setSelectedTool(t);
           }}
           onAddServer={() => setOpenAdd(true)}
-          onRemoveServer={handleRemoveServer}
+        onRemoveServer={handleRemoveServer}
+        onRenameServer={handleOpenRename}
         />
         <Dialog open={openAdd} onClose={() => setOpenAdd(false)}>
           <DialogTitle>Add Tool Server</DialogTitle>
@@ -153,6 +196,29 @@ export default function Tools() {
             <Button onClick={() => setOpenAdd(false)}>Cancel</Button>
             <Button onClick={handleAddServer} disabled={adding} variant="contained">
               {adding ? 'Adding…' : 'Add'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog open={openRename} onClose={handleCloseRename}>
+          <DialogTitle>Rename Server</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Enter a new name for server "{renameOldServer}"
+            </DialogContentText>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="New Server Name"
+              fullWidth
+              variant="outlined"
+              value={renameNewName}
+              onChange={(e) => setRenameNewName(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseRename}>Cancel</Button>
+            <Button onClick={handleConfirmRename} variant="contained">
+              Rename
             </Button>
           </DialogActions>
         </Dialog>

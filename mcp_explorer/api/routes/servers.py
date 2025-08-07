@@ -4,7 +4,7 @@ import time
 from fastapi import APIRouter, HTTPException
 
 from mcp_explorer.client.mcp_client import client
-from mcp_explorer.models import ToolServer, ToolServersResponse
+from mcp_explorer.models import ToolServer, ToolServersResponse, RenameServerRequest
 from mcp_explorer.server import create_test_stdio_server
 
 logger = logging.getLogger("mcp_explorer.api.routes.servers")
@@ -59,6 +59,27 @@ async def remove_tool_server(server_name: str):
     except Exception:
         logger.warning("Error cleaning up server %s", server_name)
     return {"status": "success", "message": f"Removed server {server_name}"}
+
+
+@router.patch("/tool-server/{old_name}")
+async def rename_tool_server(old_name: str, req: RenameServerRequest):
+    """Rename an existing tool server."""
+
+    if old_name not in client.tool_servers:
+        raise HTTPException(status_code=404, detail="Server not found")
+    new_name = req.new_name.strip()
+    if not new_name:
+        raise HTTPException(status_code=400, detail="New name must not be empty")
+    if new_name in client.tool_servers:
+        raise HTTPException(status_code=400, detail="A server with the new name already exists")
+    # Pop server entry, update its tools' server field, then reinsert under new key
+    server_info = client.tool_servers.pop(old_name)
+    for tool in server_info.get("tools", []):
+        tool["server"] = new_name
+    client.tool_servers[new_name] = server_info
+    # Refresh combined tool list so frontend sees tools under the new name
+    client.refresh_available_tools()
+    return {"status": "success", "message": f"Renamed server {old_name} to {new_name}"}
 
 
 @router.get("/create-test-stdio-server")
