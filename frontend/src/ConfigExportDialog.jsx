@@ -34,6 +34,8 @@ export default function ConfigExportDialog({ open, onClose }) {
         name: srv.name,
         type: srv.url.startsWith("http") ? "sse" : "stdio",
         url: srv.url,
+        // Do not include API keys in exported config
+        api_keys: srv.api_keys || [],
         tools: Object.entries(overrides[srv.name] || {})
           .filter(([, desc]) => typeof desc === 'string' && desc.trim() !== '')
           .map(([name, description]) => ({ name, description })),

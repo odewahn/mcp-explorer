@@ -31,6 +31,7 @@ export default function ServerTree({
   onAddServer,
   onRemoveServer,
   onRenameServer,
+  onEditApiKeys,
 }) {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [menuServer, setMenuServer] = useState(null);
@@ -75,7 +76,7 @@ export default function ServerTree({
               <React.Fragment key={srv.name}>
                 <ListItem
                   button
-                  sx={{ backgroundColor: 'grey.100' }}
+                  sx={{ backgroundColor: "grey.100" }}
                   secondaryAction={
                     srv.name !== "default" && (
                       <>
@@ -88,7 +89,9 @@ export default function ServerTree({
                         </IconButton>
                         <Menu
                           anchorEl={menuAnchorEl}
-                          open={Boolean(menuAnchorEl && menuServer === srv.name)}
+                          open={Boolean(
+                            menuAnchorEl && menuServer === srv.name
+                          )}
                           onClose={handleMenuClose}
                         >
                           <MenuItem
@@ -99,8 +102,14 @@ export default function ServerTree({
                           >
                             Rename
                           </MenuItem>
-                          <MenuItem disabled>Restart</MenuItem>
-                          <MenuItem disabled>Add API Keys</MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              onEditApiKeys(srv.name);
+                              handleMenuClose();
+                            }}
+                          >
+                            Add API Keys
+                          </MenuItem>
                           <Divider />
                           <MenuItem
                             onClick={() => {
@@ -116,15 +125,15 @@ export default function ServerTree({
                     )
                   }
                 >
-                <ListItemIcon>
+                  <ListItemIcon>
                     <StorageIcon />
-                </ListItemIcon>
-                <ListItemText primary={srv.name} secondary={srv.url} />
-              </ListItem>
+                  </ListItemIcon>
+                  <ListItemText primary={srv.name} secondary={srv.url} />
+                </ListItem>
                 <Divider />
                 <List component="div" disablePadding dense>
                   {(toolsByServer[srv.name] || []).map((tool) => (
-                <ListItemButton
+                    <ListItemButton
                       key={tool.name}
                       sx={{ pl: 4 }}
                       selected={selectedTool === tool.name}

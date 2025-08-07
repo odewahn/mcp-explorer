@@ -24,6 +24,7 @@ async def add_tool_server(server: ToolServer):
             server_url=server.url,
             server_type=server.server_type,
             server_name=server_name,
+            api_keys=server.api_keys,
         )
         if not success:
             raise HTTPException(status_code=500, detail="Failed to connect to server")
@@ -80,6 +81,8 @@ async def rename_tool_server(old_name: str, req: RenameServerRequest):
     # Refresh combined tool list so frontend sees tools under the new name
     client.refresh_available_tools()
     return {"status": "success", "message": f"Renamed server {old_name} to {new_name}"}
+
+
 
 
 @router.get("/create-test-stdio-server")

@@ -38,7 +38,7 @@ async def hello_world(name: str) -> str:
 if __name__ == "__main__":
     try:
         logger.info("Starting MCP server...")
-        logger.info(f"Using X-API-KEY: {os.environ['X-API-KEY']}")
+        # logger.info(f"Using X-API-KEY: {os.environ['X-API-KEY']}")
         mcp.run(transport="stdio")
     except KeyboardInterrupt:
         # Graceful shutdown on Ctrl+C

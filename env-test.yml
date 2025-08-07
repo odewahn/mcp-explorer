@@ -5,6 +5,8 @@ mcp:
   - name: Test Server One
     type: stdio
     cmd: python -u stdio-server.py
+    api_keys:
+      - X-API-KEY
     tools:
       - name: hello_world
         description: FARTS

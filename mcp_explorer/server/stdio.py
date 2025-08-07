@@ -58,7 +58,7 @@ class STDIOServerConnection(MCPServerConnection):
 
         return env
 
-    async def connect(self, server_url: str) -> bool:
+    async def connect(self, server_url: str, api_keys: Dict[str, Any] | None = None) -> bool:
         try:
             cmd_parts = server_url.split()
             cmd = cmd_parts[0]
@@ -71,7 +71,7 @@ class STDIOServerConnection(MCPServerConnection):
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env=self.create_env({"X-API-KEY": "xxx"}),
+                env=self.create_env(api_keys),
             )
 
             asyncio.create_task(self._log_stderr())

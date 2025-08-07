@@ -22,11 +22,14 @@ import ServerTree from "./ServerTree";
 import ToolDetail from "./ToolDetail";
 import { useServers } from "./contexts/ServersContext";
 import { useToolOverrides } from "./contexts/ToolOverrideContext";
+import { useApiKeys } from "./contexts/ApiKeysContext";
 import { API_BASE_URL } from "./apiConfig";
+import ApiKeysDialog from "./ApiKeysDialog";
 
 export default function Tools() {
   const { servers, tools, loading, refresh } = useServers();
-  const { overrides, setOverride, isOverridesDirty, markOverridesClean, renameServer } = useToolOverrides();
+  const { renameServer } = useToolOverrides();
+  const { apiKeys, setApiKeys, renameServerApiKeys } = useApiKeys();
 
   // Selection & expansion state
   const [selectedServer, setSelectedServer] = useState(null);
@@ -40,6 +43,10 @@ export default function Tools() {
     server_type: "sse",
   });
   const [adding, setAdding] = useState(false);
+
+  // API-keys dialog state
+  const [openApiKeys, setOpenApiKeys] = useState(false);
+  const [apiKeysServer, setApiKeysServer] = useState(null);
 
   // Auto-select first server/tool on load
   useEffect(() => {
@@ -102,6 +109,10 @@ export default function Tools() {
     setRenameNewName(srv);
     setOpenRename(true);
   };
+  const handleOpenApiKeys = (srv) => {
+    setApiKeysServer(srv);
+    setOpenApiKeys(true);
+  };
   const handleCloseRename = () => {
     setOpenRename(false);
     setRenameOldServer(null);
@@ -123,14 +134,51 @@ export default function Tools() {
         throw new Error(data.detail || "Failed to rename server");
       }
       await refresh();
-      // Update overrides mapping to match the renamed server
+      // Update overrides and API-keys contexts to match the renamed server
       renameServer(renameOldServer, renameNewName);
+      renameServerApiKeys(renameOldServer, renameNewName);
       if (selectedServer === renameOldServer) {
         setSelectedServer(renameNewName);
       }
       handleCloseRename();
     } catch (e) {
       alert(`Error renaming server: ${e.message}`);
+    }
+  };
+
+  // API-keys dialog handlers
+  const handleCloseApiKeys = () => {
+    setOpenApiKeys(false);
+    setApiKeysServer(null);
+  };
+  const handleConfirmApiKeys = async (srv, keysMap) => {
+    try {
+    const srvInfo = servers.find((s) => s.name === srv);
+    if (!srvInfo) return;
+    const payload = {
+      name: srv,
+      url: srvInfo.url,
+      server_type: srvInfo.url.startsWith("http") ? "sse" : "stdio",
+      api_keys: keysMap,
+    };
+    // Delete existing server so we can re-add it with new API keys
+    await fetch(`${API_BASE_URL}/tool-server/${encodeURIComponent(srv)}`, {
+      method: "DELETE",
+    });
+    const resp = await fetch(`${API_BASE_URL}/add-tool-server`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      const data = await resp.json();
+      throw new Error(data.detail || "Failed to restart server with API keys");
+    }
+    setApiKeys(srv, keysMap);
+    await refresh();
+    handleCloseApiKeys();
+    } catch (e) {
+      alert(`Error setting API keys: ${e.message}`);
     }
   };
 
@@ -148,8 +196,9 @@ export default function Tools() {
             setSelectedTool(t);
           }}
           onAddServer={() => setOpenAdd(true)}
-        onRemoveServer={handleRemoveServer}
-        onRenameServer={handleOpenRename}
+          onRemoveServer={handleRemoveServer}
+          onRenameServer={handleOpenRename}
+          onEditApiKeys={handleOpenApiKeys}
         />
         <Dialog open={openAdd} onClose={() => setOpenAdd(false)}>
           <DialogTitle>Add Tool Server</DialogTitle>
@@ -222,6 +271,14 @@ export default function Tools() {
             </Button>
           </DialogActions>
         </Dialog>
+        {/* API Keys dialog */}
+        <ApiKeysDialog
+          open={openApiKeys}
+          serverName={apiKeysServer}
+          initialKeys={apiKeys?.[apiKeysServer] ?? {}}
+          onSave={handleConfirmApiKeys}
+          onClose={handleCloseApiKeys}
+        />
       </Grid>
 
       {/* 2/3 right column */}

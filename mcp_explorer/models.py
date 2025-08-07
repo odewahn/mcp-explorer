@@ -14,6 +14,8 @@ class ServerConfig(BaseModel):
     url: str
     server_type: str
     tools: List[ServerTool] = []
+    # Placeholder list of API key names (values not stored in config)
+    api_keys: List[str] = []
 
 
 class ConfigResponse(BaseModel):
@@ -61,6 +63,8 @@ class ToolServer(BaseModel):
     url: str
     name: str = ""
     server_type: str = "sse"
+    # Optional map of API key names to values; passed through on connect
+    api_keys: dict[str, str] = {}
 
 
 class ToolServersResponse(BaseModel):
@@ -70,6 +74,8 @@ class ToolServersResponse(BaseModel):
 class RenameServerRequest(BaseModel):
     """Request body for renaming a tool server."""
     new_name: str
+
+
 
 
 class ToolCallRequest(BaseModel):
