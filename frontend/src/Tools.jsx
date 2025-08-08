@@ -113,6 +113,34 @@ export default function Tools() {
     setApiKeysServer(srv);
     setOpenApiKeys(true);
   };
+
+  // Restart a server by deleting and re-adding it
+  const handleRestartServer = async (srv) => {
+    try {
+      // Remove the server
+      await fetch(`${API_BASE_URL}/tool-server/${encodeURIComponent(srv)}`, { method: "DELETE" });
+      // Re-add with same config
+      const srvInfo = servers.find((s) => s.name === srv);
+      if (!srvInfo) throw new Error("Server info not found");
+      const payload = {
+        name: srv,
+        url: srvInfo.url,
+        server_type: srvInfo.url.startsWith("http") ? "sse" : "stdio",
+      };
+      const resp = await fetch(`${API_BASE_URL}/add-tool-server`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) {
+        const data = await resp.json();
+        throw new Error(data.detail || "Failed to restart server");
+      }
+      await refresh();
+    } catch (e) {
+      alert(`Error restarting server: ${e.message}`);
+    }
+  };
   const handleCloseRename = () => {
     setOpenRename(false);
     setRenameOldServer(null);
@@ -199,6 +227,7 @@ export default function Tools() {
           onRemoveServer={handleRemoveServer}
           onRenameServer={handleOpenRename}
           onEditApiKeys={handleOpenApiKeys}
+          onRestartServer={handleRestartServer}
         />
         <Dialog open={openAdd} onClose={() => setOpenAdd(false)}>
           <DialogTitle>Add Tool Server</DialogTitle>

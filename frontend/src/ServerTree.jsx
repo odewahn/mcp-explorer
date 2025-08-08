@@ -32,6 +32,7 @@ export default function ServerTree({
   onRemoveServer,
   onRenameServer,
   onEditApiKeys,
+  onRestartServer,
 }) {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [menuServer, setMenuServer] = useState(null);
@@ -109,6 +110,14 @@ export default function ServerTree({
                             }}
                           >
                             Add API Keys
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              onRestartServer(srv.name);
+                              handleMenuClose();
+                            }}
+                          >
+                            Restart
                           </MenuItem>
                           <Divider />
                           <MenuItem

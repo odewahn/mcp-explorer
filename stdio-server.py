@@ -2,6 +2,7 @@ from mcp.server.fastmcp import FastMCP
 import os
 import logging
 import sys
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,22 @@ async def hello_world(name: str) -> str:
 
     print(f"Received request with name: {name}", file=sys.stderr)
     return f"Hello, {name}!"
+
+
+@mcp.tool()
+async def today() -> str:
+    """
+    Return today's date in yyyyy-mm-dd format.
+    """
+    return str(datetime.date.today())
+
+
+@mcp.tool()
+async def month_in_words() -> str:
+    """
+    Return the current month in words.
+    """
+    return datetime.date.today().strftime("%B")
 
 
 # Run the server
