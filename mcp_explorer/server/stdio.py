@@ -19,16 +19,16 @@ class STDIOServerConnection(MCPServerConnection):
         self.tools = []
 
     # Helper function to create environment variables for subprocess
-    """
+
     def create_env(self, additional_vars=None):
         env = os.environ.copy()
         if additional_vars:
             env.update(additional_vars)
         return env
-    """
 
+    """
     def create_env(self, additional_vars=None):
-        """Create environment with only safe, allowed variables"""
+
         # Essential system variables that are usually safe to pass
         safe_system_vars = [
             "PATH",
@@ -57,8 +57,11 @@ class STDIOServerConnection(MCPServerConnection):
             env.update(additional_vars)
 
         return env
+    """
 
-    async def connect(self, server_url: str, api_keys: Dict[str, Any] | None = None) -> bool:
+    async def connect(
+        self, server_url: str, api_keys: Dict[str, Any] | None = None
+    ) -> bool:
         try:
             cmd_parts = server_url.split()
             cmd = cmd_parts[0]
@@ -68,6 +71,7 @@ class STDIOServerConnection(MCPServerConnection):
             self._process = await asyncio.create_subprocess_exec(
                 cmd,
                 *args,
+                limit=1024 * 128,  # 128 KiB,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,

@@ -13,4 +13,7 @@ node_modules/
 .venv
 .aider*
 *.log
+
+# Random config files
 tim.yaml
+miso.yaml
