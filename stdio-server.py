@@ -32,6 +32,7 @@ async def hello_world(name: str) -> str:
         raise ValueError("X-API-KEY environment variable must be set to a valid value.")
 
     print(f"Received request with name: {name}", file=sys.stderr)
+    print(f"X-API-KEY: {os.environ.get('X-API-KEY', 'not set')}", file=sys.stderr)
     return f"Hello, {name}!"
 
 

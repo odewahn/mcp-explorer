@@ -10,6 +10,7 @@ import {
 import YAML from "js-yaml";
 import { useToolOverrides } from "./contexts/ToolOverrideContext";
 import { useSystemPrompt } from "./contexts/SystemPromptContext";
+import { useApiKeys } from "./contexts/ApiKeysContext";
 import { useServers } from "./contexts/ServersContext";
 
 /**
@@ -19,7 +20,7 @@ export default function ConfigExportDialog({ open, onClose }) {
   const [yamlText, setYamlText] = useState("");
   const { overrides, markOverridesClean } = useToolOverrides();
   const { systemPrompt, markPromptClean } = useSystemPrompt();
-
+  const { apiKeys, markApiKeysClean } = useApiKeys();
   const { servers } = useServers();
   useEffect(() => {
     if (!open) return;
@@ -34,8 +35,11 @@ export default function ConfigExportDialog({ open, onClose }) {
         name: srv.name,
         type: srv.url.startsWith("http") ? "sse" : "stdio",
         url: srv.url,
-        // Do not include API keys in exported config
-        api_keys: srv.api_keys || [],
+        // Export the placeholder key names loaded from config
+        // Export merged key names: placeholders from config + any added in UI
+        api_keys: Array.from(
+          new Set([...(srv.api_keys || []), ...(Object.keys(apiKeys[srv.name] || {}))])
+        ),
         tools: Object.entries(overrides[srv.name] || {})
           .filter(([, desc]) => typeof desc === 'string' && desc.trim() !== '')
           .map(([name, description]) => ({ name, description })),
@@ -45,7 +49,7 @@ export default function ConfigExportDialog({ open, onClose }) {
     const yaml = YAML.dump(cfgObj);
     console.debug("ConfigExportDialog: generated YAML:", yaml);
     setYamlText(yaml);
-  }, [open, servers, overrides, systemPrompt]);
+  }, [open, servers, overrides, systemPrompt, apiKeys]);
 
   const handleDownload = () => {
     const blob = new Blob([yamlText || ""], { type: "text/yaml" });
@@ -58,6 +62,7 @@ export default function ConfigExportDialog({ open, onClose }) {
     // Mark configs as saved (clean state)
     markPromptClean();
     markOverridesClean();
+    markApiKeysClean();
   };
 
   return (

@@ -14,7 +14,7 @@ class ServerConfig(BaseModel):
     url: str
     server_type: str
     tools: List[ServerTool] = []
-    # Placeholder list of API key names (values not stored in config)
+    # List of API key names loaded from user config (placeholders only)
     api_keys: List[str] = []
 
 

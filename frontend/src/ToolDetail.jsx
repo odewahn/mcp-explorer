@@ -26,7 +26,7 @@ import { useToolOverrides } from './contexts/ToolOverrideContext';
  * ToolDetail: show description, override editor, JSON form and result.
  */
 export default function ToolDetail({ server, toolName, toolsByServer }) {
-  const { overrides, setOverride, markOverridesClean } = useToolOverrides();
+  const { overrides, setOverride } = useToolOverrides();
   const tool = (toolsByServer[server] || []).find((t) => t.name === toolName) || {};
 
   const [formData, setFormData] = useState({});
@@ -65,32 +65,38 @@ export default function ToolDetail({ server, toolName, toolsByServer }) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <Box sx={{ flex: 1, height: 200, overflow: 'auto', border: 1, p: 1, borderRadius: 1 }}>
-          <AceEditor
-            mode="text"
-            theme="github"
-            name="orig-desc"
-            value={tool.description || ''}
-            readOnly
-            width="100%"
-            height="100%"
-            setOptions={{ useWorker: false, wrap: true }}
-          />
-        </Box>
-        <Box sx={{ flex: 1, height: 200 }}>
-          <AceEditor
-            mode="text"
-            theme="github"
-            name="override-desc"
-            value={overrides[server]?.[toolName] || ''}
-            onChange={(v) => setOverride(server, toolName, v)}
-            width="100%"
-            height="100%"
-            setOptions={{ useWorker: false, wrap: true }}
-          />
-        </Box>
+    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+      <Box sx={{ flex: 1, height: 200, overflow: 'auto', border: 1, p: 1, borderRadius: 1 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Original Description
+        </Typography>
+        <AceEditor
+          mode="text"
+          theme="github"
+          name="orig-desc"
+          value={tool.description || ''}
+          readOnly
+          width="100%"
+          height="100%"
+          setOptions={{ useWorker: false, wrap: true }}
+        />
       </Box>
+      <Box sx={{ flex: 1, height: 200, overflow: 'auto', border: 1, p: 1, borderRadius: 1 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Override Description
+        </Typography>
+        <AceEditor
+          mode="text"
+          theme="github"
+          name="override-desc"
+          value={overrides[server]?.[toolName] || ''}
+          onChange={(v) => setOverride(server, toolName, v)}
+          width="100%"
+          height="100%"
+          setOptions={{ useWorker: false, wrap: true }}
+        />
+      </Box>
+    </Box>
       <Box sx={{ mb: 2 }}>
         <Typography variant="h6" gutterBottom>
           Input Parameters

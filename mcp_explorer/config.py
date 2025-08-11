@@ -125,25 +125,26 @@ def load_user_config(path: str) -> None:
                     tool_list,
                 )
                 tool_list = []
-        # Extract API key placeholders (names only) from user config
-        api_keys = entry.get("api_keys") or {}
-        if not isinstance(api_keys, dict):
-            logger.error(
-                "Invalid api_keys for server '%s': expected mapping, got %r; ignoring",
-                name,
-                api_keys,
+            # Extract placeholder API key names (list of strings) from config
+            raw_keys = entry.get("api_keys") or []
+            if isinstance(raw_keys, list):
+                key_names = [k for k in raw_keys if isinstance(k, str) and k.strip()]
+            else:
+                logger.error(
+                    "Invalid api_keys for server '%s': expected list, got %r; ignoring",
+                    name,
+                    raw_keys,
+                )
+                key_names = []
+            servers.append(
+                {
+                    "name": name,
+                    "url": cmd_or_url,
+                    "server_type": stype,
+                    "tools": tool_list,
+                    "api_keys": key_names,
+                }
             )
-            api_keys = {}
-        key_names = [k for k in api_keys.keys() if isinstance(k, str) and k.strip()]
-        servers.append(
-            {
-                "name": name,
-                "url": cmd_or_url,
-                "server_type": stype,
-                "tools": tool_list,
-                "api_keys": key_names,
-            }
-        )
         settings.mcp_servers = servers
         logger.info("Preconfigured MCP servers: %r", settings.mcp_servers)
 

@@ -7,6 +7,7 @@ mcp:
     cmd: python -u stdio-server.py
     api_keys:
       - X-API-KEY
+      - FARTZ
     tools:
       - name: hello_world
         description: FARTS
