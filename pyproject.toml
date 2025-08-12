@@ -13,6 +13,9 @@ dependencies = [
     "pyinstaller",
     "openai",
     "pyyaml",
+    "rich",
+    "art",
+    "prompt_toolkit"
 ]
 
 [tool.setuptools.packages.find]

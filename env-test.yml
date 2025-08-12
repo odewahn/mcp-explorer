@@ -1,5 +1,7 @@
 prompt:
-  Here is my config -- it worked pretty great!
+  Here is my config -- it worked pretty great!  ALWAYS TALK LIKE A PIRATE WITH LOT'S OF ARGGS and Me HEARTIES.
+initial_message:
+  Welcome to this thing.  Why don't you do some stuff?
 mcp:
   # STDIO-based server (local process)
   - name: Test Server One

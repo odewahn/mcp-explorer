@@ -55,6 +55,17 @@ mcp_explorer/
 
 ---
 
+## CLI Usage
+
+# Note: Interactive REPL mode requires the 'anthropic' and 'prompt_toolkit' packages (install via your environment or bundle).
+```bash
+# Start HTTP server + UI (default behavior)
+mcp-explorer [--config <path>] [--verbose]
+
+# Interactive REPL chat client
+mcp-explorer repl [--config <path>] [--verbose]
+```
+
 ## Frontend
 
 ## Build for OSx
