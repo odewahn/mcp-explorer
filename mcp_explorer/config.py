@@ -33,6 +33,8 @@ class Settings(BaseSettings):
 
     # Preconfigured MCP servers to auto-connect (name -> command)
     mcp_servers: list[dict[str, str]] = []
+    # Initial user message to seed conversations (as a user-role first message)
+    initial_message: str = ""
 
     class Config:
         env_file = ".env"
@@ -96,6 +98,13 @@ def load_user_config(path: str) -> None:
         settings.default_system_prompt = cfg["prompt"]
         logger.info(
             "Default system prompt overridden to: %r", settings.default_system_prompt
+        )
+
+    # Override initial user message if provided
+    if "initial_message" in cfg:
+        settings.initial_message = cfg["initial_message"]
+        logger.info(
+            "Default initial_message overridden to: %r", settings.initial_message
         )
 
     # Load MCP server entries: list of dicts with explicit fields

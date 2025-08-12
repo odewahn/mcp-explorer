@@ -19,7 +19,7 @@ import { useServers } from "./contexts/ServersContext";
 export default function ConfigExportDialog({ open, onClose }) {
   const [yamlText, setYamlText] = useState("");
   const { overrides, markOverridesClean } = useToolOverrides();
-  const { systemPrompt, markPromptClean } = useSystemPrompt();
+  const { systemPrompt, initialMessage, markPromptClean, markInitialClean } = useSystemPrompt();
   const { apiKeys, markApiKeysClean } = useApiKeys();
   const { servers } = useServers();
   useEffect(() => {
@@ -31,6 +31,7 @@ export default function ConfigExportDialog({ open, onClose }) {
     // Build aggregate config from contexts
     const cfgObj = {
       prompt: systemPrompt,
+      initial_message: initialMessage,
       mcp: servers.map((srv) => ({
         name: srv.name,
         type: srv.url.startsWith("http") ? "sse" : "stdio",
@@ -49,7 +50,7 @@ export default function ConfigExportDialog({ open, onClose }) {
     const yaml = YAML.dump(cfgObj);
     console.debug("ConfigExportDialog: generated YAML:", yaml);
     setYamlText(yaml);
-  }, [open, servers, overrides, systemPrompt, apiKeys]);
+  }, [open, servers, overrides, systemPrompt, apiKeys, initialMessage]);
 
   const handleDownload = () => {
     const blob = new Blob([yamlText || ""], { type: "text/yaml" });
@@ -63,6 +64,7 @@ export default function ConfigExportDialog({ open, onClose }) {
     markPromptClean();
     markOverridesClean();
     markApiKeysClean();
+    markInitialClean();
   };
 
   return (

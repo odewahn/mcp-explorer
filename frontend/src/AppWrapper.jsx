@@ -77,9 +77,9 @@ function AppWrapper() {
 
   const [exportOpen, setExportOpen] = useState(false);
   // Prompt user if there are unsaved configuration changes
-  const { isPromptDirty, markPromptClean } = useSystemPrompt();
-  const { isOverridesDirty, markOverridesClean } = useToolOverrides();
-  const hasUnsavedChanges = isPromptDirty || isOverridesDirty;
+  const { isPromptDirty, isInitialDirty } = useSystemPrompt();
+  const { isOverridesDirty } = useToolOverrides();
+  const hasUnsavedChanges = isPromptDirty || isInitialDirty || isOverridesDirty;
   useEffect(() => {
     const handler = (e) => {
       if (hasUnsavedChanges) {

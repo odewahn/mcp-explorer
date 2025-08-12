@@ -21,6 +21,7 @@ class ServerConfig(BaseModel):
 class ConfigResponse(BaseModel):
     """Response model for /config endpoint"""
     prompt: str
+    initial_message: str
     mcp: List[ServerConfig]
 
 
@@ -74,6 +75,11 @@ class ToolServersResponse(BaseModel):
 class RenameServerRequest(BaseModel):
     """Request body for renaming a tool server."""
     new_name: str
+
+class InitialMessageRequest(BaseModel):
+    """Request body for updating the initial user message."""
+    initial_message: str
+
 
 
 
