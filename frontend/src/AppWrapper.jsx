@@ -84,11 +84,11 @@ function AppWrapper() {
     const handler = (e) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
       }
     };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedChanges]);
   return (
     <BrowserRouter>
@@ -151,7 +151,7 @@ function AppWrapper() {
                   }}
                   onClick={() => setActivePage("system-prompt")}
                 >
-                  System Prompt
+                  Conversation
                 </Button>
               </Tooltip>
               <Button
@@ -175,7 +175,7 @@ function AppWrapper() {
                 }}
                 onClick={() => setActivePage("tools")}
               >
-                Tools
+                MCP
               </Button>
               <Tooltip title="Export current config as YAML">
                 <Button
@@ -184,7 +184,7 @@ function AppWrapper() {
                   sx={{ textTransform: "none", fontWeight: 500 }}
                   onClick={() => setExportOpen(true)}
                 >
-                  Export Config
+                  Config
                 </Button>
               </Tooltip>
             </Box>

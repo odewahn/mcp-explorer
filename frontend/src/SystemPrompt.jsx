@@ -11,7 +11,8 @@ import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 function SystemPrompt() {
-  const { systemPrompt, setSystemPrompt, initialMessage, setInitialMessage } = useSystemPrompt();
+  const { systemPrompt, setSystemPrompt, initialMessage, setInitialMessage } =
+    useSystemPrompt();
 
   const handleChangePrompt = (newValue) => {
     setSystemPrompt(newValue);
@@ -29,20 +30,22 @@ function SystemPrompt() {
     }
   };
 
-
   return (
-    <Container maxWidth="lg" sx={{ py: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Paper 
-        variant="outlined" 
-        sx={{ 
-          p: 3, 
-          backgroundColor: '#ffffff',
-          border: '1px solid #e0e0e0',
-          borderRadius: '4px',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-          display: 'flex',
-          flexDirection: 'column',
-          height: '90vh'
+    <Container
+      maxWidth="lg"
+      sx={{ py: 3, height: "100%", display: "flex", flexDirection: "column" }}
+    >
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 3,
+          backgroundColor: "#ffffff",
+          border: "1px solid #e0e0e0",
+          borderRadius: "4px",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+          display: "flex",
+          flexDirection: "column",
+          height: "90vh",
         }}
       >
         <Typography variant="h6" gutterBottom>
@@ -62,14 +65,11 @@ function SystemPrompt() {
           highlightActiveLine={true}
           placeholder="Enter initial user message (first prompt)..."
           setOptions={{ tabSize: 2, wrap: true }}
-          style={{ borderRadius: '4px', border: '1px solid #e0e0e0', mb: 2 }}
+          style={{ borderRadius: "4px", border: "1px solid #e0e0e0", mb: 2 }}
         />
 
         <Typography variant="h6" gutterBottom>
           System Prompt
-        </Typography>
-        <Typography variant="body2" gutterBottom>
-          The system prompt provides initial instructions to the AI.
         </Typography>
         <AceEditor
           mode="text"
@@ -85,7 +85,7 @@ function SystemPrompt() {
           highlightActiveLine={true}
           placeholder="Enter system instructions for the AI..."
           setOptions={{ tabSize: 2, wrap: true }}
-          style={{ borderRadius: '4px', border: '1px solid #e0e0e0', flex: 1 }}
+          style={{ borderRadius: "4px", border: "1px solid #e0e0e0", flex: 1 }}
         />
       </Paper>
     </Container>
