@@ -48,6 +48,10 @@ DEFAULT_USER_CONFIG_FILE = ".mcp-config"
 # Raw contents of explorer-config.yaml (or DEFAULT_USER_CONFIG_FILE) if loaded via CLI
 user_config: dict | None = None
 
+# REPL Configuration
+DEFAULT_REPL_PROMPT = "mcp-explorer> "
+DEFAULT_REPL_ART = "MCP Explorer"
+
 
 def configure_logging() -> None:
     """
@@ -61,6 +65,7 @@ def configure_logging() -> None:
 
     class ColorFormatter(logging.Formatter):
         """Formatter that highlights WARNING level logs in red."""
+
         RED = "\033[31m"
         RESET = "\033[0m"
 
@@ -116,11 +121,15 @@ def load_user_config(path: str) -> None:
                 continue
             name = entry.get("name")
             if not isinstance(name, str) or not name.strip():
-                logger.error("Missing or invalid 'name' in server entry: %r; skipping", entry)
+                logger.error(
+                    "Missing or invalid 'name' in server entry: %r; skipping", entry
+                )
                 continue
             cmd_or_url = entry.get("url") or entry.get("cmd")
             if not isinstance(cmd_or_url, str) or not cmd_or_url.strip():
-                logger.error("No 'url' or 'cmd' specified for server '%s'; skipping", name)
+                logger.error(
+                    "No 'url' or 'cmd' specified for server '%s'; skipping", name
+                )
                 continue
             stype = entry.get(
                 "type",
@@ -156,4 +165,3 @@ def load_user_config(path: str) -> None:
             )
         settings.mcp_servers = servers
         logger.info("Preconfigured MCP servers: %r", settings.mcp_servers)
-
