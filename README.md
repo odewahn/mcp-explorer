@@ -58,6 +58,7 @@ mcp_explorer/
 ## CLI Usage
 
 # Note: Interactive REPL mode requires the 'anthropic' and 'prompt_toolkit' packages (install via your environment or bundle).
+
 ```bash
 # Start HTTP server + UI (default behavior)
 mcp-explorer [--config <path>] [--verbose]
@@ -89,10 +90,32 @@ pycodesign ../pycodesign.ini
 
 NB: Before you can notarize, you need to have a developer account with Apple and have set up the notarization process. This is a bit of a pain, but it's not too bad. You can find the instructions [here](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution).
 
+## Build for Docker
+
+First, build the image:
+
+```
+docker build --no-cache  -t mcp-explorer -f mcp-explorer.Dockerfile .
+```
+
+Then run it -- you can use environment variables to pass in the commands you want to run:
+
+````
+docker run -it \
+   -v $(pwd):/app \
+   --env-file .env \
+   mcp-explorer \
+   mcp-explorer repl
+```
+
 # Testing STDIO client
 
 This repo include a simple STDIO server that you can use to test the client:
 
-```
+````
+
 python -u stdio-server.py
+
+```
+
 ```

@@ -239,7 +239,14 @@ export default function Tools() {
                 labelId="server-type-label"
                 value={newServer.server_type}
                 onChange={(e) =>
-                  setNewServer((p) => ({ ...p, server_type: e.target.value }))
+                  setNewServer((p) => ({
+                    ...p,
+                    server_type: e.target.value,
+                    url:
+                      e.target.value === 'stdio'
+                        ? 'python -u stdio-server.py'
+                        : p.url,
+                  }))
                 }
                 label="Server Type"
               >
@@ -255,11 +262,17 @@ export default function Tools() {
             <TextField
               autoFocus
               margin="dense"
-              label={newServer.server_type === 'stdio' ? 'Command' : 'URL'}
+              label={
+                newServer.server_type === 'stdio' ? 'Command' : 'URL'
+              }
               fullWidth
               variant="outlined"
+              multiline
+              minRows={3}
               value={newServer.url}
-              onChange={(e) => setNewServer((p) => ({ ...p, url: e.target.value }))}
+              onChange={(e) =>
+                setNewServer((p) => ({ ...p, url: e.target.value }))
+              }
             />
             <TextField
               margin="dense"

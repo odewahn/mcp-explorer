@@ -8,6 +8,10 @@ wheels/
 .vscode
 node_modules/
 .DS_Store
+test.db
+
+# credentials
+.env
 
 # Virtual environments
 .venv

@@ -1,15 +1,25 @@
-prompt:
-  Here is my config -- it worked pretty great!  ALWAYS TALK LIKE A PIRATE WITH LOT'S OF ARGGS and Me HEARTIES.
-initial_message:
-  Welcome to this thing.  Why don't you do some stuff?
+prompt: >-
+  Here is my config -- it worked pretty great!  ALWAYS TALK LIKE A PIRATE WITH
+  LOT'S OF ARGGS and Me HEARTIES.
+initial_message: Welcome to this thing.  Why don't you do some stuff?
 mcp:
-  # STDIO-based server (local process)
+  - name: server-1755192392
+    type: stdio
+    url: |2-
+          docker run \
+            --rm \
+            -i \
+            -v $(pwd):/mcp \
+            mcp/sqlite \
+            --db-path \
+            /mcp/test.db
+    api_keys: []
+    tools: []
   - name: Test Server One
     type: stdio
-    cmd: python -u stdio-server.py
+    url: python -u stdio-server.py
     api_keys:
       - X-API-KEY
-      - FARTZ
     tools:
       - name: hello_world
         description: FARTS

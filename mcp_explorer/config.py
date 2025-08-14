@@ -37,7 +37,9 @@ class Settings(BaseSettings):
     initial_message: str = ""
 
     class Config:
+        # Read environment file and ignore any extra environment variables
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()

@@ -63,15 +63,11 @@ class STDIOServerConnection(MCPServerConnection):
         self, server_url: str, api_keys: Dict[str, Any] | None = None
     ) -> bool:
         try:
-            cmd_parts = server_url.split()
-            cmd = cmd_parts[0]
-            args = cmd_parts[1:]
-
-            logger.info(f"Starting server with: {cmd} {' '.join(args)}")
-            self._process = await asyncio.create_subprocess_exec(
-                cmd,
-                *args,
-                limit=1024 * 128,  # 128 KiB,
+            # Launch the command via shell to support complex invocations (e.g. docker run with escapes)
+            logger.info(f"Starting STDIO server with shell command: {server_url}")
+            self._process = await asyncio.create_subprocess_shell(
+                server_url,
+                limit=1024 * 128,  # 128 KiB buffer
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
