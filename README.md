@@ -61,13 +61,35 @@ mcp_explorer/
 
 ```bash
 # Start HTTP server + UI (default behavior)
-mcp-explorer [--config <path>] [--verbose]
+mcp-explorer [--config <path>] [--verbose] [--port <port>]
 
 # Interactive REPL chat client
-mcp-explorer repl [--config <path>] [--verbose]
+mcp-explorer repl [--config <path>] [--verbose] [--port <port>]
 ```
 
-## Frontend
+## Frontend / SPA
+
+The React single-page app is built into the Python package under `static`
+and served at the root URL (`/`) by FastAPI. All back-end APIs live under `/api`,
+so the UI makes relative requests (no CORS or hard-coded URLs needed).
+
+### Development mode
+
+```bash
+cd frontend
+npm install
+# Point Vite dev proxy to your back-end port (default 8000)
+export VITE_API_BASE_URL=http://localhost:9000
+npm run dev
+```
+
+### Build for production
+
+```bash
+npm run build
+```
+
+This writes files into `/static`, which PyInstaller then bundles automatically.
 
 ## Build for OSx
 

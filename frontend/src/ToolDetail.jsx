@@ -21,6 +21,7 @@ import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-monokai';
 
 import { useToolOverrides } from './contexts/ToolOverrideContext';
+import { API_BASE_URL } from './apiConfig';
 
 /**
  * ToolDetail: show description, override editor, JSON form and result.
@@ -45,7 +46,7 @@ export default function ToolDetail({ server, toolName, toolsByServer }) {
     setExecuting(true);
     setError(null);
     try {
-      const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://0.0.0.0:8000'}/call-tool`, {
+      const resp = await fetch(`${API_BASE_URL}/call-tool`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tool_name: toolName, tool_args: formData }),

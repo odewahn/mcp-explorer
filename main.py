@@ -28,6 +28,11 @@ def run():
         help="Enable verbose logging (default off)",
     )
     parser.add_argument(
+        "--port", "-p",
+        type=int,
+        help=f"Port for HTTP server (default: {settings.port})",
+    )
+    parser.add_argument(
         "mode",
         nargs="?",
         choices=["repl", "serve"],
@@ -45,6 +50,10 @@ def run():
         load_user_config(args.config)
     elif os.path.exists(DEFAULT_USER_CONFIG_FILE):
         load_user_config(DEFAULT_USER_CONFIG_FILE)
+
+    # Apply optional port override
+    if args.port:
+        settings.port = args.port
 
     # Decide mode: 'repl' for interactive client, 'serve' for HTTP server (default)
     if args.mode == "repl":

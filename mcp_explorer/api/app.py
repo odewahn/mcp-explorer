@@ -34,14 +34,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount(
-    "/static",
-    StaticFiles(directory=os.path.join(root_dir, "static"), html=True),
-    name="static",
-)
 from mcp_explorer.api.routes import router as api_router
 
-app.include_router(api_router)
+# All API routes are available under the /api prefix to avoid SPA conflicts
+app.include_router(api_router, prefix="/api")
+
+# Serve SPA fallback on any other path
+app.mount(
+    "/",
+    StaticFiles(directory=os.path.join(root_dir, "static"), html=True),
+    name="spa",
+)
 
 
 @app.on_event("shutdown")
@@ -54,7 +57,9 @@ async def startup_event():
     """Auto-connect to any preconfigured MCP servers from explorer-config.yaml"""
     failed = []
     if settings.mcp_servers:
-        logger.info("Auto-connecting to %d configured MCP servers", len(settings.mcp_servers))
+        logger.info(
+            "Auto-connecting to %d configured MCP servers", len(settings.mcp_servers)
+        )
         for entry in settings.mcp_servers:
             name = entry.get("name")
             url = entry.get("url")
@@ -103,10 +108,13 @@ async def startup_event():
                 os._exit(1)
 
     # Open browser after MCP servers are connected and startup complete
+    # After startup, open the browser to the SPA root rather than fixed URL
     if os.environ.get("ENV") == "dev":
+        # During development, point at the Vite dev server
         target = settings.dev_url
     else:
-        target = settings.prod_url
+        # Production: serve SPA at root of API server
+        target = f"http://localhost:{settings.port}/"
     logger.info("Opening browser to %s", target)
     webbrowser.open_new(target)
 
@@ -123,10 +131,14 @@ def main():
     logger.info(f"Starting MCP Explorer API at {url}")
     logger.info(f"Version: {settings.version}")
     logger.info(f"Logging to: {settings.log_file} at level {settings.log_level}")
-    logger.debug("Debug mode is enabled" if settings.debug else "Debug mode is disabled")
+    logger.debug(
+        "Debug mode is enabled" if settings.debug else "Debug mode is disabled"
+    )
 
     # Start the FastAPI app via uvicorn with configured log level
-    uvicorn.run(app, host="0.0.0.0", port=settings.port, log_level=settings.log_level.lower())
+    uvicorn.run(
+        app, host="0.0.0.0", port=settings.port, log_level=settings.log_level.lower()
+    )
 
 
 if __name__ == "__main__":
