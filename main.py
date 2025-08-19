@@ -61,6 +61,7 @@ def run():
         import asyncio
         import sys as _sys
         from prompt_toolkit import PromptSession
+        from prompt_toolkit.formatted_text import ANSI
         from prompt_toolkit.patch_stdout import patch_stdout
         from rich import print
         from art import text2art
@@ -113,7 +114,7 @@ Please ensure 'anthropic' and other dependencies are installed.",
                 )
                 print(settings.initial_message)
 
-            session = PromptSession(f"\n{DEFAULT_REPL_PROMPT}")
+            session = PromptSession(ANSI(f"\n\033[1;32m{DEFAULT_REPL_PROMPT}\033[0m"))
 
             while True:
                 with patch_stdout():

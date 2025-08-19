@@ -56,7 +56,9 @@ mcp_explorer/
 ---
 
 ## CLI Usage
-
+# Note: any relative paths in your config file (e.g. for `cmd:` entries or flags like `--directory`) are resolved
+# relative to your current working directory (i.e. where you ran `mcp-explorer`).
+# 
 # Note: Interactive REPL mode requires the 'anthropic' and 'prompt_toolkit' packages (install via your environment or bundle).
 
 ```bash
