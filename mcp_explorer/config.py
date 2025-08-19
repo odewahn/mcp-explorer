@@ -45,7 +45,7 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Default location for user-supplied config when --config is omitted
-DEFAULT_USER_CONFIG_FILE = ".mcp-config"
+DEFAULT_USER_CONFIG_FILE = "mcp-server.yaml"
 
 # Raw contents of explorer-config.yaml (or DEFAULT_USER_CONFIG_FILE) if loaded via CLI
 user_config: dict | None = None
