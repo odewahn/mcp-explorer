@@ -1,22 +1,16 @@
 #first stage - builder
-FROM python:3.11-slim as builder
-
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
-RUN which uv && ls -la $(which uv)
+FROM python:3.11-slim AS builder
 
 # Build mcp-explorer package with PyInstaller
 COPY . /mcp-explorer
 WORKDIR /mcp-explorer
 RUN apt-get update && apt-get install -y binutils
-RUN uv venv .venv --python=3.11
-# Install the project and its dependencies (including PyInstaller) from pyproject.toml
-RUN uv pip install -e .
-RUN .venv/bin/python -m PyInstaller --noconfirm --clean mcp-explorer.spec
+RUN pip install -r mcp-explorer-requirements.txt
+RUN pyinstaller --noconfirm --clean mcp-explorer.spec
 
 #second stage
 FROM python:3.11-slim
-COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 COPY --from=builder /mcp-explorer/dist/mcp-explorer /usr/local/bin/mcp-explorer
 
 # Copy only metadata and package code for pip install (avoid extra files)

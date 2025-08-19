@@ -1,0 +1,10 @@
+anthropic
+httpx
+mcp[cli]
+fastapi
+uvicorn
+pyinstaller
+pyyaml
+rich
+art
+prompt_toolkit

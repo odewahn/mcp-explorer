@@ -130,6 +130,19 @@ docker run -it \
    mcp-explorer repl
 ```
 
+
+## Retrieving the binary from the container
+
+https://stackoverflow.com/questions/25292198/docker-how-can-i-copy-a-file-from-an-image-to-a-host
+
+```
+id=$(docker create mcp-explorer)
+docker cp $id:/usr/local/bin/mcp-explorer ./dist/mcp-explorer.ubuntu
+docker rm $id
+```
+
+This makes a file that you can then put somewhere so that it can be copied onto a machine.
+
 # Testing STDIO client
 
 This repo include a simple STDIO server that you can use to test the client:
