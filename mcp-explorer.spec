@@ -4,7 +4,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('mcp_explorer/static', 'static')],
+    datas=[('mcp_explorer/static', 'mcp_explorer/static')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
