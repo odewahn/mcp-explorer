@@ -16,9 +16,9 @@ logger = logging.getLogger("mcp_explorer")
 # from mcp_explorer.server import SSEServerConnection
 from mcp_explorer.client.mcp_client import client
 
-# Root directory (project root) for serving top-level static assets
-root_dir = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+# Package root for serving bundled static assets
+pkg_root = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), os.pardir)
 )
 
 # (client is instantiated in mcp_explorer.client.mcp_client)
@@ -42,7 +42,7 @@ app.include_router(api_router, prefix="/api")
 # Serve SPA fallback on any other path
 app.mount(
     "/",
-    StaticFiles(directory=os.path.join(root_dir, "static"), html=True),
+    StaticFiles(directory=os.path.join(pkg_root, "static"), html=True),
     name="spa",
 )
 

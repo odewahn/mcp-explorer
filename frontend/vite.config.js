@@ -20,7 +20,7 @@ export default ({ mode }) => {
       },
     },
     build: {
-      outDir: "../static/",
+      outDir: "../mcp_explorer/static/",
       emptyOutDir: true,
     },
   });

@@ -71,7 +71,7 @@ mcp-explorer repl [--config <path>] [--verbose] [--port <port>]
 
 ## Frontend / SPA
 
-The React single-page app is built into the Python package under `static`
+The React single-page app is built into the Python package under `mcp_explorer/static`
 and served at the root URL (`/`) by FastAPI. All back-end APIs live under `/api`,
 so the UI makes relative requests (no CORS or hard-coded URLs needed).
 
@@ -91,7 +91,7 @@ npm run dev
 npm run build
 ```
 
-This writes files into `/static`, which PyInstaller then bundles automatically.
+This writes files into `mcp_explorer/static/`, which PyInstaller then bundles automatically.
 
 ## Build for OSx
 

@@ -9,6 +9,12 @@ from mcp_explorer.config import (
     DEFAULT_REPL_ART,
 )
 
+from rich.console import Console
+
+console = Console()
+
+startup_message = f"[bold green]MCP Explorer v {settings.version} is starting..."
+
 
 def run():
     # Entrypoint for both HTTP server (default) and interactive REPL
@@ -28,7 +34,8 @@ def run():
         help="Enable verbose logging (default off)",
     )
     parser.add_argument(
-        "--port", "-p",
+        "--port",
+        "-p",
         type=int,
         help=f"Port for HTTP server (default: {settings.port})",
     )
@@ -65,12 +72,10 @@ def run():
         from prompt_toolkit.patch_stdout import patch_stdout
         from rich import print
         from art import text2art
-        from rich.console import Console
-
-        console = Console()
 
         try:
-            from mcp_explorer.client.mcp_client import client
+            with console.status(startup_message) as status:
+                from mcp_explorer.client.mcp_client import client
         except ImportError as exc:
             print(
                 f"[ERROR] Could not import mcp_client: {exc}. \
@@ -137,7 +142,8 @@ Please ensure 'anthropic' and other dependencies are installed.",
         asyncio.run(repl_loop())
     else:
         # Start HTTP API and UI server
-        from mcp_explorer.api.app import main
+        with console.status(startup_message) as status:
+            from mcp_explorer.api.app import main
 
         main()
 
