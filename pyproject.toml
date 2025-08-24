@@ -1,6 +1,6 @@
 [project]
-name = "oreilly-llm-connect-client"
-version = "0.1.0"
+name = "mcp-explorer"
+version = "0.2.0"
 description = "LLM Client"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,10 +14,24 @@ dependencies = [
     "pyyaml",
     "rich",
     "art",
-    "prompt_toolkit"
+    "prompt_toolkit",
 ]
+
+[project.scripts]
+"mcp-explorer" = "main:run"
+
 
 [tool.setuptools.packages.find]
 where    = ["."]
 include  = ["mcp_explorer*"]
 exclude  = ["frontend*", "static*"]
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.package-data]
+"mcp_explorer" = ["static/**"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

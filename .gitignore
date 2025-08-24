@@ -17,6 +17,7 @@ test.db
 .venv
 .aider*
 *.log
+.venv-test
 
 # Random config files
 tim.yaml

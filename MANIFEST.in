@@ -1,0 +1,3 @@
+recursive-include mcp_explorer/static *
+include explorer-config.yaml
+include stdio-server.py
