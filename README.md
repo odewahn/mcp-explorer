@@ -56,17 +56,22 @@ mcp_explorer/
 ---
 
 ## CLI Usage
+
 # Note: any relative paths in your config file (e.g. for `cmd:` entries or flags like `--directory`) are resolved
+
 # relative to your current working directory (i.e. where you ran `mcp-explorer`).
-# 
+
+#
+
 # Note: Interactive REPL mode requires the 'anthropic' and 'prompt_toolkit' packages (install via your environment or bundle).
 
 ```bash
-# Start HTTP server + UI (default behavior)
-mcp-explorer [--config <path>] [--verbose] [--port <port>]
+# Start HTTP server + UI (default behavior).
+# To decrypt `ENCRYPTED_ANTHROPIC_API_KEY` at runtime, supply `--dangerouslyInsecurePassword`.
+mcp-explorer [--config <path>] [--verbose] [--port <port>] [--dangerouslyInsecurePassword]
 
-# Interactive REPL chat client
-mcp-explorer repl [--config <path>] [--verbose] [--port <port>]
+# Interactive REPL chat client (can also use `--dangerouslyInsecurePassword`)
+mcp-explorer repl [--config <path>] [--verbose] [--port <port>] [--dangerouslyInsecurePassword]
 ```
 
 ## Frontend / SPA
@@ -154,6 +159,7 @@ This repo include a simple STDIO server that you can use to test the client:
 python -u stdio-server.py
 
 ```
+
 ```
 
 ## Building the Python package
@@ -161,6 +167,10 @@ python -u stdio-server.py
 You can create a source distribution (`sdist`) and a wheel for publication on PyPI (and for local testing) using the standard PEP 517 build workflow:
 
 ```bash
+
+python -m ensurepip --upgrade
+python -m pip install --upgrade pip setuptools wheel
+
 python3 -m pip install --upgrade build
 # Build both source archive and wheel into the `dist/` directory
 python3 -m build --sdist --wheel
@@ -173,7 +183,7 @@ python3 -m venv .venv-test
 source .venv-test/bin/activate
 pip install --upgrade pip
 # Install your wheel (replace <version> with the actual version)
-pip install dist/mcp_explorer-<version>-py3-none-any.whl
+pip install dist/mcp_explorer-0.2.1-py3-none-any.whl
 mcp-explorer --help
 deactivate
 ```

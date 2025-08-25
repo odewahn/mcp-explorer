@@ -34,6 +34,14 @@ def run():
         help="Enable verbose logging (default off)",
     )
     parser.add_argument(
+        "--dangerouslyInsecurePassword",
+        action="store_true",
+        help=(
+            "Prompt for password to decrypt ENCRYPTED_ANTHROPIC_API_KEY "
+            "and override the plaintext API key in memory"
+        ),
+    )
+    parser.add_argument(
         "--port",
         "-p",
         type=int,
@@ -61,6 +69,18 @@ def run():
     # Apply optional port override
     if args.port:
         settings.port = args.port
+
+    # If requested, decrypt the wrapped Anthropic key and override the plain var
+    if args.dangerouslyInsecurePassword:
+        from mcp_explorer.utils.secrets import load_and_decrypt_env
+
+        try:
+            decrypted = load_and_decrypt_env("ENCRYPTED_ANTHROPIC_API_KEY")
+        except Exception as e:
+            console.print(f"[bold red]Error unlocking ENCRYPTED_ANTHROPIC_API_KEY:[/] {e}")
+            raise SystemExit(1)
+
+        os.environ["ANTHROPIC_API_KEY"] = decrypted
 
     # Decide mode: 'repl' for interactive client, 'serve' for HTTP server (default)
     if args.mode == "repl":
