@@ -1,22 +1,13 @@
 import os, base64, json, getpass
-from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from Crypto.Protocol.KDF import scrypt as _scrypt
+from Crypto.Cipher import AES
 
 VERSION = 1
 b64e = lambda b: base64.urlsafe_b64encode(b).decode("ascii")
 
 
 def derive_key(password: bytes, salt: bytes) -> bytes:
-    kdf = Scrypt(
-        salt=salt,
-        length=32,
-        n=2**15,  # adjust down (2**14) if too slow
-        r=8,
-        p=1,
-        backend=default_backend(),
-    )
-    return kdf.derive(password)
+    return _scrypt(password, salt, 32, N=2**15, r=8, p=1)
 
 
 api_key = getpass.getpass("API key to encrypt (input hidden): ").encode()
@@ -26,10 +17,10 @@ salt = os.urandom(16)
 key = derive_key(password, salt)
 
 nonce = os.urandom(12)
-aesgcm = AESGCM(key)
-ct = aesgcm.encrypt(nonce, api_key, None)
+cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+ct, tag = cipher.encrypt_and_digest(api_key)
 
-payload = {"v": VERSION, "s": b64e(salt), "n": b64e(nonce), "c": b64e(ct)}
+payload = {"v": VERSION, "s": b64e(salt), "n": b64e(nonce), "c": b64e(ct + tag)}
 token = "ENC:" + base64.urlsafe_b64encode(json.dumps(payload).encode()).decode()
 
 print("\nPut this in your env:")

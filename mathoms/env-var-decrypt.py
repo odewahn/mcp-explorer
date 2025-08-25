@@ -1,15 +1,13 @@
 import os, base64, json, getpass
-from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from Crypto.Protocol.KDF import scrypt as _scrypt
+from Crypto.Cipher import AES
 
 
 b64d = lambda s: base64.urlsafe_b64decode(s.encode())
 
 
 def derive_key(password: bytes, salt: bytes) -> bytes:
-    kdf = Scrypt(salt=salt, length=32, n=2**15, r=8, p=1, backend=default_backend())
-    return kdf.derive(password)
+    return _scrypt(password, salt, 32, N=2**15, r=8, p=1)
 
 
 def load_and_decrypt_env(var_name: str = "ENCRYPTED_ANTHROPIC_API_KEY") -> str:
@@ -23,12 +21,16 @@ def load_and_decrypt_env(var_name: str = "ENCRYPTED_ANTHROPIC_API_KEY") -> str:
 
     salt = b64d(payload["s"])
     nonce = b64d(payload["n"])
-    ct = b64d(payload["c"])
+    data = b64d(payload["c"])
+    ct, tag = data[:-16], data[-16:]
 
     password = getpass.getpass("Password to unlock secret: ").encode()
     key = derive_key(password, salt)
 
-    return AESGCM(key).decrypt(nonce, ct, None).decode()
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+    plaintext = cipher.decrypt_and_verify(ct, tag)
+
+    return plaintext.decode()
 
 
 if __name__ == "__main__":
