@@ -1,4 +1,5 @@
-import os, base64, json, getpass
+import os, base64, json
+from rich.prompt import Prompt
 from Crypto.Protocol.KDF import scrypt as _scrypt
 from Crypto.Cipher import AES
 
@@ -24,7 +25,7 @@ def load_and_decrypt_env(var_name: str = "ENCRYPTED_ANTHROPIC_API_KEY") -> str:
     data = b64d(payload["c"])
     ct, tag = data[:-16], data[-16:]
 
-    password = getpass.getpass("Password to unlock secret: ").encode()
+    password = Prompt.ask("Password to unlock secret", password=True).encode()
     key = derive_key(password, salt)
 
     cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
