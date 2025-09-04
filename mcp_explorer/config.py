@@ -114,6 +114,13 @@ def load_user_config(path: str) -> None:
             "Default initial_message overridden to: %r", settings.initial_message
         )
 
+    # Override LLM model if provided
+    if "model" in cfg:
+        settings.default_model = cfg["model"]
+        logger.info(
+            "Default LLM model overridden to: %r", settings.default_model
+        )
+
     # Load MCP server entries: list of dicts with explicit fields
     if "mcp" in cfg:
         servers: list[dict[str, str | list[dict[str, str]]]] = []

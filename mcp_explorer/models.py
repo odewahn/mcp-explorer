@@ -22,6 +22,7 @@ class ConfigResponse(BaseModel):
     """Response model for /config endpoint"""
     prompt: str
     initial_message: str
+    model: str
     mcp: List[ServerConfig]
 
 
@@ -79,6 +80,16 @@ class RenameServerRequest(BaseModel):
 class InitialMessageRequest(BaseModel):
     """Request body for updating the initial user message."""
     initial_message: str
+
+
+class ModelRequest(BaseModel):
+    """Request body for updating the LLM model."""
+    model: str
+
+
+class ModelsResponse(BaseModel):
+    """Response model for listing available LLM models via /models endpoint."""
+    models: List[Dict[str, Any]]
 
 
 

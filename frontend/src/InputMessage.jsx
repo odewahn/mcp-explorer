@@ -4,10 +4,6 @@ import {
   CircularProgress,
   TextField,
   Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Box,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -22,17 +18,9 @@ import { useToolOverrides } from "./contexts/ToolOverrideContext";
 function InputMessage({ onNewMessage }) {
   const [message, setMessage] = useState("");
   const [spinner, setSpinner] = useState(false);
-  const [model, setModel] = useState("claude-3-5-sonnet-20241022");
-  const { systemPrompt } = useSystemPrompt();
+  const { systemPrompt, model } = useSystemPrompt();
   const { overrides } = useToolOverrides();
 
-  // Available models
-  const models = [
-    "claude-3-5-sonnet-20241022",
-    "claude-3-opus-20240229",
-    "claude-3-sonnet-20240229",
-    "claude-3-haiku-20240307",
-  ];
 
   // This function is called when the user clicks the "Send" button or presses Enter.
   // It sends the message to the server.
@@ -148,28 +136,6 @@ function InputMessage({ onNewMessage }) {
         alignItems: "flex-start",
       }}
     >
-      <FormControl variant="outlined" size="small" sx={{ width: "200px" }}>
-        <InputLabel id="model-select-label">Model</InputLabel>
-        <Select
-          labelId="model-select-label"
-          id="model-select"
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          label="Model"
-          sx={{
-            borderRadius: "4px",
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#e0e0e0",
-            },
-          }}
-        >
-          {models.map((modelOption) => (
-            <MenuItem key={modelOption} value={modelOption}>
-              {modelOption}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
 
       <TextField
         value={message}

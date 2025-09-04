@@ -19,7 +19,7 @@ import { useServers } from "./contexts/ServersContext";
 export default function ConfigExportDialog({ open, onClose }) {
   const [yamlText, setYamlText] = useState("");
   const { overrides, markOverridesClean } = useToolOverrides();
-  const { systemPrompt, initialMessage, markPromptClean, markInitialClean } = useSystemPrompt();
+  const { systemPrompt, initialMessage, model, markPromptClean, markInitialClean } = useSystemPrompt();
   const { apiKeys, markApiKeysClean } = useApiKeys();
   const { servers } = useServers();
   useEffect(() => {
@@ -32,6 +32,7 @@ export default function ConfigExportDialog({ open, onClose }) {
     const cfgObj = {
       prompt: systemPrompt,
       initial_message: initialMessage,
+      model,
       mcp: servers.map((srv) => ({
         name: srv.name,
         type: srv.url.startsWith("http") ? "sse" : "stdio",

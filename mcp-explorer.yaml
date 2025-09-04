@@ -1,0 +1,10 @@
+prompt: Here is my config -- it worked pretty great!
+initial_message: How can I help you?
+model: claude-sonnet-4-20250514
+mcp:
+  - name: Test Server One
+    type: stdio
+    url: python -u stdio-server.py
+    api_keys:
+      - X-API-KEY
+    tools: []

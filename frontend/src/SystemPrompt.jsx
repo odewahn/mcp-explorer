@@ -1,5 +1,13 @@
 import React from "react";
-import { Typography, Box, Paper, Container } from "@mui/material";
+import {
+  Typography,
+  Paper,
+  Container,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import AceEditor from "react-ace";
 import { useSystemPrompt } from "./contexts/SystemPromptContext";
 import { API_BASE_URL } from "./apiConfig";
@@ -11,8 +19,15 @@ import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 function SystemPrompt() {
-  const { systemPrompt, setSystemPrompt, initialMessage, setInitialMessage } =
-    useSystemPrompt();
+  const {
+    systemPrompt,
+    setSystemPrompt,
+    initialMessage,
+    setInitialMessage,
+    model,
+    setModel,
+    modelList,
+  } = useSystemPrompt();
 
   const handleChangePrompt = (newValue) => {
     setSystemPrompt(newValue);
@@ -29,6 +44,10 @@ function SystemPrompt() {
       console.error("Failed to update initial message on server:", e);
     }
   };
+
+  // Use dynamic model list fetched from server (fallback to current model only)
+  // Use dynamic model list (fallback to just the current model ID)
+  const models = modelList.length > 0 ? modelList : [{ id: model }];
 
   return (
     <Container
@@ -48,6 +67,26 @@ function SystemPrompt() {
           height: "90vh",
         }}
       >
+        <FormControl
+          variant="outlined"
+          size="small"
+          sx={{ mb: 2, width: "100%", maxWidth: 300 }}
+        >
+          <InputLabel id="model-select-label">Model</InputLabel>
+          <Select
+            labelId="model-select-label"
+            value={model}
+            label="Model"
+            onChange={(e) => setModel(e.target.value)}
+          >
+            {models.map((m) => (
+              <MenuItem key={m.id} value={m.id}>
+                {m.id}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         <Typography variant="h6" gutterBottom>
           Initial Message
         </Typography>

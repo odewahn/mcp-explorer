@@ -74,6 +74,23 @@ mcp-explorer [--config <path>] [--verbose] [--port <port>] [--dangerouslyInsecur
 mcp-explorer repl [--config <path>] [--verbose] [--port <port>] [--dangerouslyInsecurePassword]
 ```
 
+## User Configuration File
+
+You can specify an optional configuration file (default: `mcp-server.yaml`) to override prompts, LLM model, and preconfigure MCP servers. The file supports the following keys:
+
+```yaml
+prompt: |
+  <system prompt for the AI>
+
+initial_message: >
+  <initial user message to seed conversations>
+
+model: "<full model name (e.g. claude-3-5-sonnet-20241022)>"
+
+mcp:
+  # list of MCP server entries...
+```
+
 ## Frontend / SPA
 
 The React single-page app is built into the Python package under `mcp_explorer/static`
