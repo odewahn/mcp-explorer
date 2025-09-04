@@ -11,7 +11,7 @@ except ImportError:
 class Settings(BaseSettings):
     """Application configuration, loaded from environment or defaults."""
 
-    version: str = "0.2.2"
+    version: str = "0.2.3"
 
     # Anthropic model settings
     default_model: str = "claude-3-5-sonnet-20241022"
@@ -117,9 +117,7 @@ def load_user_config(path: str) -> None:
     # Override LLM model if provided
     if "model" in cfg:
         settings.default_model = cfg["model"]
-        logger.info(
-            "Default LLM model overridden to: %r", settings.default_model
-        )
+        logger.info("Default LLM model overridden to: %r", settings.default_model)
 
     # Load MCP server entries: list of dicts with explicit fields
     if "mcp" in cfg:
