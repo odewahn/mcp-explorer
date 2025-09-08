@@ -33,6 +33,10 @@ export default function Tools() {
   const { renameServer } = useToolOverrides();
   const { apiKeys, setApiKeys, renameServerApiKeys } = useApiKeys();
   const { envVars, setEnvVars, renameServerEnvVars } = useEnvVars();
+  // Edit Command/URL dialog state
+  const [openEditCommand, setOpenEditCommand] = useState(false);
+  const [editCommandServer, setEditCommandServer] = useState(null);
+  const [editCommandValue, setEditCommandValue] = useState("");
 
   // Selection & expansion state
   const [selectedServer, setSelectedServer] = useState(null);
@@ -123,10 +127,56 @@ export default function Tools() {
     setEnvVarsServer(srv);
     setOpenEnvVars(true);
   };
+  const handleOpenEditCommand = (srv) => {
+    setEditCommandServer(srv);
+    setEditCommandValue(
+      servers.find((s) => s.name === srv)?.url || ""
+    );
+    setOpenEditCommand(true);
+  };
 
   const handleCloseEnvVars = () => {
     setOpenEnvVars(false);
     setEnvVarsServer(null);
+  };
+  const handleCloseEditCommand = () => {
+    setOpenEditCommand(false);
+    setEditCommandServer(null);
+    setEditCommandValue("");
+  };
+
+  const handleConfirmEditCommand = async (srv, newUrl) => {
+    try {
+      const srvInfo = servers.find((s) => s.name === srv);
+      if (!srvInfo) return;
+      const payload = {
+        name: srv,
+        url: newUrl,
+        server_type: srvInfo.url.startsWith("http") ? "sse" : "stdio",
+        api_keys: apiKeys[srv] ?? {},
+        environment_variables: Object.entries(envVars[srv] || {}).map(
+          ([key, val]) => ({ key, val })
+        ),
+      };
+      await fetch(`${API_BASE_URL}/tool-server/${encodeURIComponent(srv)}`, {
+        method: "DELETE",
+      });
+      const resp = await fetch(`${API_BASE_URL}/add-tool-server`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) {
+        const data = await resp.json();
+        throw new Error(data.detail || "Failed to update server URL/command");
+      }
+      await refresh();
+      handleCloseEditCommand();
+    } catch (e) {
+      console.error("Error updating server URL/command", e);
+      const msg = e instanceof Error ? e.message : JSON.stringify(e);
+      alert(`Error updating server URL/command: ${msg}`);
+    }
   };
 
   const handleConfirmEnvVars = async (srv, varsMap) => {
@@ -279,6 +329,7 @@ export default function Tools() {
           onRenameServer={handleOpenRename}
           onEditApiKeys={handleOpenApiKeys}
           onEditEnvVars={handleOpenEnvVars}
+          onEditCommand={handleOpenEditCommand}
           onRestartServer={handleRestartServer}
         />
         <Dialog open={openAdd} onClose={() => setOpenAdd(false)}>
@@ -381,6 +432,32 @@ export default function Tools() {
           onSave={handleConfirmEnvVars}
           onClose={handleCloseEnvVars}
         />
+        {/* Edit Command/URL dialog */}
+        <Dialog open={openEditCommand} onClose={handleCloseEditCommand} fullWidth maxWidth="sm">
+          <DialogTitle>Edit Command/URL for {editCommandServer}</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Update the startup command (for STDIO) or URL (for SSE) of server "{editCommandServer}".
+            </DialogContentText>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Command or URL"
+              fullWidth
+              variant="outlined"
+              multiline
+              minRows={2}
+              value={editCommandValue}
+              onChange={(e) => setEditCommandValue(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseEditCommand}>Cancel</Button>
+            <Button onClick={() => handleConfirmEditCommand(editCommandServer, editCommandValue)} variant="contained">
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Grid>
 
       {/* 2/3 right column */}

@@ -33,6 +33,7 @@ export default function ServerTree({
   onRenameServer,
   onEditApiKeys,
   onEditEnvVars,
+  onEditCommand,
   onRestartServer,
 }) {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
@@ -106,6 +107,14 @@ export default function ServerTree({
                           </MenuItem>
                           <MenuItem
                             onClick={() => {
+                              onEditCommand(srv.name);
+                              handleMenuClose();
+                            }}
+                          >
+                            Edit Command/URL
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
                               onEditApiKeys(srv.name);
                               handleMenuClose();
                             }}
@@ -120,6 +129,7 @@ export default function ServerTree({
                           >
                             Edit Environment Variables
                           </MenuItem>
+
                           <MenuItem
                             onClick={() => {
                               onRestartServer(srv.name);
