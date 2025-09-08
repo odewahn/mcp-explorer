@@ -11,6 +11,7 @@ import YAML from "js-yaml";
 import { useToolOverrides } from "./contexts/ToolOverrideContext";
 import { useSystemPrompt } from "./contexts/SystemPromptContext";
 import { useApiKeys } from "./contexts/ApiKeysContext";
+import { useEnvVars } from "./contexts/EnvVarsContext";
 import { useServers } from "./contexts/ServersContext";
 
 /**
@@ -21,6 +22,7 @@ export default function ConfigExportDialog({ open, onClose }) {
   const { overrides, markOverridesClean } = useToolOverrides();
   const { systemPrompt, initialMessage, model, markPromptClean, markInitialClean } = useSystemPrompt();
   const { apiKeys, markApiKeysClean } = useApiKeys();
+  const { envVars, markEnvVarsClean } = useEnvVars();
   const { servers } = useServers();
   useEffect(() => {
     if (!open) return;
@@ -37,10 +39,13 @@ export default function ConfigExportDialog({ open, onClose }) {
         name: srv.name,
         type: srv.url.startsWith("http") ? "sse" : "stdio",
         url: srv.url,
-        // Export the placeholder key names loaded from config
         // Export merged key names: placeholders from config + any added in UI
         api_keys: Array.from(
           new Set([...(srv.api_keys || []), ...(Object.keys(apiKeys[srv.name] || {}))])
+        ),
+        // Export environment variables with their values as a list of {key,val}
+        environment_variables: Object.entries(envVars[srv.name] || {}).map(
+          ([key, val]) => ({ key, val })
         ),
         tools: Object.entries(overrides[srv.name] || {})
           .filter(([, desc]) => typeof desc === 'string' && desc.trim() !== '')
@@ -51,7 +56,7 @@ export default function ConfigExportDialog({ open, onClose }) {
     const yaml = YAML.dump(cfgObj);
     console.debug("ConfigExportDialog: generated YAML:", yaml);
     setYamlText(yaml);
-  }, [open, servers, overrides, systemPrompt, apiKeys, initialMessage]);
+  }, [open, servers, overrides, systemPrompt, apiKeys, envVars, initialMessage]);
 
   const handleDownload = () => {
     const blob = new Blob([yamlText || ""], { type: "text/yaml" });
@@ -65,6 +70,7 @@ export default function ConfigExportDialog({ open, onClose }) {
     markPromptClean();
     markOverridesClean();
     markApiKeysClean();
+    markEnvVarsClean();
     markInitialClean();
   };
 

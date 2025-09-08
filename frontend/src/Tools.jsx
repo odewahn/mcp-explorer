@@ -23,6 +23,8 @@ import ToolDetail from "./ToolDetail";
 import { useServers } from "./contexts/ServersContext";
 import { useToolOverrides } from "./contexts/ToolOverrideContext";
 import { useApiKeys } from "./contexts/ApiKeysContext";
+import EnvVarsDialog from "./EnvVarsDialog";
+import { useEnvVars } from "./contexts/EnvVarsContext";
 import { API_BASE_URL } from "./apiConfig";
 import ApiKeysDialog from "./ApiKeysDialog";
 
@@ -30,6 +32,7 @@ export default function Tools() {
   const { servers, tools, loading, refresh } = useServers();
   const { renameServer } = useToolOverrides();
   const { apiKeys, setApiKeys, renameServerApiKeys } = useApiKeys();
+  const { envVars, setEnvVars, renameServerEnvVars } = useEnvVars();
 
   // Selection & expansion state
   const [selectedServer, setSelectedServer] = useState(null);
@@ -47,6 +50,9 @@ export default function Tools() {
   // API-keys dialog state
   const [openApiKeys, setOpenApiKeys] = useState(false);
   const [apiKeysServer, setApiKeysServer] = useState(null);
+  // Environment-variables dialog state
+  const [openEnvVars, setOpenEnvVars] = useState(false);
+  const [envVarsServer, setEnvVarsServer] = useState(null);
 
   // Auto-select first server/tool on load
   useEffect(() => {
@@ -112,6 +118,51 @@ export default function Tools() {
   const handleOpenApiKeys = (srv) => {
     setApiKeysServer(srv);
     setOpenApiKeys(true);
+  };
+  const handleOpenEnvVars = (srv) => {
+    setEnvVarsServer(srv);
+    setOpenEnvVars(true);
+  };
+
+  const handleCloseEnvVars = () => {
+    setOpenEnvVars(false);
+    setEnvVarsServer(null);
+  };
+
+  const handleConfirmEnvVars = async (srv, varsMap) => {
+    try {
+      const srvInfo = servers.find((s) => s.name === srv);
+      if (!srvInfo) return;
+      const payload = {
+        name: srv,
+        url: srvInfo.url,
+        server_type: srvInfo.url.startsWith("http") ? "sse" : "stdio",
+        api_keys: apiKeys[srv] ?? {},
+        // Send environment_variables as list of {key,val} pairs per API schema
+        environment_variables: Object.entries(varsMap).map(([key, val]) => ({ key, val })),
+      };
+      await fetch(`${API_BASE_URL}/tool-server/${encodeURIComponent(srv)}`, {
+        method: "DELETE",
+      });
+      const resp = await fetch(`${API_BASE_URL}/add-tool-server`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) {
+        const data = await resp.json();
+        throw new Error(
+          data.detail || "Failed to restart server with environment variables"
+        );
+      }
+      setEnvVars(srv, varsMap);
+      await refresh();
+      handleCloseEnvVars();
+    } catch (e) {
+      console.error("Error setting environment variables", e);
+      const msg = e instanceof Error ? e.message : JSON.stringify(e);
+      alert(`Error setting environment variables: ${msg}`);
+    }
   };
 
   // Restart a server by deleting and re-adding it
@@ -227,6 +278,7 @@ export default function Tools() {
           onRemoveServer={handleRemoveServer}
           onRenameServer={handleOpenRename}
           onEditApiKeys={handleOpenApiKeys}
+          onEditEnvVars={handleOpenEnvVars}
           onRestartServer={handleRestartServer}
         />
         <Dialog open={openAdd} onClose={() => setOpenAdd(false)}>
@@ -320,6 +372,14 @@ export default function Tools() {
           initialKeys={apiKeys?.[apiKeysServer] ?? {}}
           onSave={handleConfirmApiKeys}
           onClose={handleCloseApiKeys}
+        />
+        {/* Environment Variables dialog */}
+        <EnvVarsDialog
+          open={openEnvVars}
+          serverName={envVarsServer}
+          initialVars={envVars?.[envVarsServer] ?? {}}
+          onSave={handleConfirmEnvVars}
+          onClose={handleCloseEnvVars}
         />
       </Grid>
 

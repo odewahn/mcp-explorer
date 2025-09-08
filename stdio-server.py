@@ -52,6 +52,14 @@ async def month_in_words() -> str:
     return datetime.date.today().strftime("%B")
 
 
+@mcp.tool()
+async def print_env_var(name: str) -> str:
+    """
+    Print the value of an environment variable.
+    """
+    return os.environ.get(name, "not set")
+
+
 # Run the server
 if __name__ == "__main__":
     try:

@@ -16,6 +16,8 @@ class ServerConfig(BaseModel):
     tools: List[ServerTool] = []
     # List of API key names loaded from user config (placeholders only)
     api_keys: List[str] = []
+    # Placeholder environment variables (explicit list of key/val pairs) from config
+    environment_variables: List[Dict[str, str]] = []
 
 
 class ConfigResponse(BaseModel):
@@ -66,7 +68,9 @@ class ToolServer(BaseModel):
     name: str = ""
     server_type: str = "sse"
     # Optional map of API key names to values; passed through on connect
-    api_keys: dict[str, str] = {}
+    api_keys: Dict[str, str] = {}
+    # Optional list of environment variable name/value pairs; passed through on connect
+    environment_variables: List[Dict[str, str]] = []
 
 
 class ToolServersResponse(BaseModel):

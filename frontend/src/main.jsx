@@ -7,6 +7,7 @@ import "./index.css";
 import { SystemPromptProvider } from "./contexts/SystemPromptContext";
 import { ToolOverrideProvider } from "./contexts/ToolOverrideContext";
 import { ApiKeysProvider } from "./contexts/ApiKeysContext";
+import { EnvVarsProvider } from "./contexts/EnvVarsContext";
 import { ServersProvider } from "./contexts/ServersContext";
 
 createRoot(document.getElementById("root")).render(
@@ -16,9 +17,11 @@ createRoot(document.getElementById("root")).render(
       <SystemPromptProvider>
         <ToolOverrideProvider>
           <ApiKeysProvider>
-            <ServersProvider>
-              <AppWrapper />
-            </ServersProvider>
+            <EnvVarsProvider>
+              <ServersProvider>
+                <AppWrapper />
+              </ServersProvider>
+            </EnvVarsProvider>
           </ApiKeysProvider>
         </ToolOverrideProvider>
       </SystemPromptProvider>

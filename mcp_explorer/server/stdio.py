@@ -60,18 +60,27 @@ class STDIOServerConnection(MCPServerConnection):
     """
 
     async def connect(
-        self, server_url: str, api_keys: Dict[str, Any] | None = None
+        self,
+        server_url: str,
+        api_keys: Dict[str, Any] | None = None,
+        environment_variables: Dict[str, str] | None = None,
     ) -> bool:
         try:
             # Launch the command via shell to support complex invocations (e.g. docker run with escapes)
             logger.info(f"Starting STDIO server with shell command: {server_url}")
+            # Combine API keys and environment variables into subprocess env
+            additional_vars: dict[str, str] = {}
+            if api_keys:
+                additional_vars.update({k: str(v) for k, v in api_keys.items()})
+            if environment_variables:
+                additional_vars.update(environment_variables)
             self._process = await asyncio.create_subprocess_shell(
                 server_url,
                 limit=1024 * 128,  # 128 KiB buffer
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env=self.create_env(api_keys),
+                env=self.create_env(additional_vars),
             )
 
             asyncio.create_task(self._log_stderr())

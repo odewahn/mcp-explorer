@@ -23,3 +23,6 @@ test.db
 tim.yaml
 miso.yaml
 npx-uvx-examples.yaml
+env-var-test.yaml
+*.ndjson
+*.lock

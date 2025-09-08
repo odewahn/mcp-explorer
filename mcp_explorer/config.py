@@ -161,6 +161,33 @@ def load_user_config(path: str) -> None:
                     raw_keys,
                 )
                 key_names = []
+            # Extract placeholder environment variables as list of {key, val} dicts
+            raw_envs = entry.get("environment_variables") or []
+            env_list: list[dict[str, str]] = []
+            if isinstance(raw_envs, list):
+                for item in raw_envs:
+                    if (
+                        isinstance(item, dict)
+                        and isinstance(item.get("key"), str)
+                        and item.get("key").strip()
+                        and isinstance(item.get("val"), str)
+                    ):
+                        env_list.append({
+                            "key": item["key"].strip(),
+                            "val": item["val"],
+                        })
+                    else:
+                        logger.error(
+                            "Invalid environment_variables entry for server '%s': %r; skipping",
+                            name,
+                            item,
+                        )
+            else:
+                logger.error(
+                    "Invalid environment_variables for server '%s': expected list, got %r; ignoring",
+                    name,
+                    raw_envs,
+                )
             servers.append(
                 {
                     "name": name,
@@ -168,6 +195,7 @@ def load_user_config(path: str) -> None:
                     "server_type": stype,
                     "tools": tool_list,
                     "api_keys": key_names,
+                    "environment_variables": env_list,
                 }
             )
         settings.mcp_servers = servers

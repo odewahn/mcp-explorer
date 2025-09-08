@@ -32,6 +32,7 @@ export default function ServerTree({
   onRemoveServer,
   onRenameServer,
   onEditApiKeys,
+  onEditEnvVars,
   onRestartServer,
 }) {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
@@ -110,6 +111,14 @@ export default function ServerTree({
                             }}
                           >
                             Add API Keys
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              onEditEnvVars(srv.name);
+                              handleMenuClose();
+                            }}
+                          >
+                            Edit Environment Variables
                           </MenuItem>
                           <MenuItem
                             onClick={() => {

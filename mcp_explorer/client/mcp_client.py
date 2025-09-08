@@ -27,18 +27,27 @@ class MCPClient:
         server_type: str = "sse",
         server_name: str = "default-C",
         api_keys: dict[str, str] | None = None,
+        environment_variables: dict[str, str] | None = None,
     ) -> bool:
-        """Connect to an MCP server over SSE or STDIO transport, optionally supplying API keys."""
+        """Connect to an MCP server over SSE or STDIO transport, supplying API keys and environment variables."""
         if server_type.lower() == "sse":
-            return await self.connect_to_sse_server(server_url, server_name, api_keys)
+            return await self.connect_to_sse_server(
+                server_url, server_name, api_keys, environment_variables
+            )
         elif server_type.lower() == "stdio":
-            return await self.connect_to_stdio_server(server_url, server_name, api_keys)
+            return await self.connect_to_stdio_server(
+                server_url, server_name, api_keys, environment_variables
+            )
         else:
             logger.error("Unsupported server type: %s", server_type)
             return False
 
     async def connect_to_sse_server(
-        self, server_url: str, server_name: str = "default-D", api_keys: dict[str, str] | None = None
+        self,
+        server_url: str,
+        server_name: str = "default-D",
+        api_keys: dict[str, str] | None = None,
+        environment_variables: dict[str, str] | None = None,
     ) -> bool:
         """Connect to an MCP server running with SSE transport."""
         try:
@@ -118,6 +127,7 @@ class MCPClient:
         server_url: str,
         server_name: str = "default-E",
         api_keys: dict[str, str] | None = None,
+        environment_variables: dict[str, str] | None = None,
     ) -> bool:
         """Connect to an MCP server running with STDIO transport."""
         try:
@@ -125,7 +135,7 @@ class MCPClient:
 
             logger.info("Creating STDIO connection to: %s", server_url)
             connection = STDIOServerConnection()
-            if not await connection.connect(server_url, api_keys):
+            if not await connection.connect(server_url, api_keys, environment_variables):
                 logger.error("Failed to connect to STDIO server")
                 return False
             tools = await connection.list_tools()

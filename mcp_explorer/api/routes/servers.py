@@ -20,11 +20,14 @@ async def add_tool_server(server: ToolServer):
             server_name = f"{server_name}-{int(time.time())}"
 
         logger.info("Adding new server: %s at %s", server_name, server.url)
+        # Convert list of {key,val} dicts into env var mapping
+        env_map = {item["key"]: item["val"] for item in server.environment_variables or []}
         success = await client.connect_to_server(
             server_url=server.url,
             server_type=server.server_type,
             server_name=server_name,
             api_keys=server.api_keys,
+            environment_variables=env_map,
         )
         if not success:
             raise HTTPException(status_code=500, detail="Failed to connect to server")
