@@ -21,9 +21,14 @@ class STDIOServerConnection(MCPServerConnection):
     # Helper function to create environment variables for subprocess
 
     def create_env(self, additional_vars=None):
+        """
+        Create a subprocess environment, merging the current environment with any additional_vars.
+        Expand shell-style variables and user home in provided variable values.
+        """
         env = os.environ.copy()
         if additional_vars:
-            env.update(additional_vars)
+            for key, val in additional_vars.items():
+                env[key] = os.path.expanduser(os.path.expandvars(val))
         return env
 
     """
