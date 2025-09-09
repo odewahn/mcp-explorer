@@ -11,7 +11,7 @@ except ImportError:
 class Settings(BaseSettings):
     """Application configuration, loaded from environment or defaults."""
 
-    version: str = "0.2.6"
+    version: str = "0.2.7"
 
     # Anthropic model settings
     default_model: str = "claude-3-5-sonnet-20241022"
