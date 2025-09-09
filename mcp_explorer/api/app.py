@@ -66,10 +66,19 @@ async def startup_event():
             stype = entry.get("server_type", "stdio")
             logger.info("Connecting to MCP server %s -> %s (%s)", name, url, stype)
             try:
+                # Extract API keys and environment variables from config entry
+                env_list = entry.get("environment_variables") or []
+                env_map = {
+                    e.get("key"): e.get("val")
+                    for e in env_list
+                    if isinstance(e, dict) and isinstance(e.get("key"), str)
+                }
                 ok = await client.connect_to_server(
                     server_url=url,
                     server_type=stype,
                     server_name=name,
+                    api_keys=entry.get("api_keys"),
+                    environment_variables=env_map,
                 )
                 if ok:
                     logger.info("Connected to MCP server %s", name)

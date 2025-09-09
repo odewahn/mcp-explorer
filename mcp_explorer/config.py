@@ -11,7 +11,7 @@ except ImportError:
 class Settings(BaseSettings):
     """Application configuration, loaded from environment or defaults."""
 
-    version: str = "0.2.3"
+    version: str = "0.2.5"
 
     # Anthropic model settings
     default_model: str = "claude-3-5-sonnet-20241022"
@@ -172,10 +172,12 @@ def load_user_config(path: str) -> None:
                         and item.get("key").strip()
                         and isinstance(item.get("val"), str)
                     ):
-                        env_list.append({
-                            "key": item["key"].strip(),
-                            "val": item["val"],
-                        })
+                        env_list.append(
+                            {
+                                "key": item["key"].strip(),
+                                "val": item["val"],
+                            }
+                        )
                     else:
                         logger.error(
                             "Invalid environment_variables entry for server '%s': %r; skipping",
