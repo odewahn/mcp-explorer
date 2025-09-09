@@ -19,12 +19,18 @@ import ChatIcon from "@mui/icons-material/Chat";
 import BuildIcon from "@mui/icons-material/Build";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SaveIcon from "@mui/icons-material/Save";
+import CodeIcon from "@mui/icons-material/Code";
+import DownloadIcon from "@mui/icons-material/Download";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import App from "./App";
 import Tools from "./Tools";
 import SystemPrompt from "./SystemPrompt";
 import ConfigExportDialog from "./ConfigExportDialog.jsx";
+import ToolsJsonDialog from "./ToolsJsonDialog.jsx";
 import { useSystemPrompt } from "./contexts/SystemPromptContext";
 import { useToolOverrides } from "./contexts/ToolOverrideContext";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 
 // Helper component to handle route changes
 function RouteObserver({ setActivePage }) {
@@ -76,6 +82,12 @@ function AppWrapper() {
   });
 
   const [exportOpen, setExportOpen] = useState(false);
+  const [toolsJsonOpen, setToolsJsonOpen] = useState(false);
+  // Download menu state for Config/Tools
+  const [downloadAnchorEl, setDownloadAnchorEl] = useState(null);
+  const openDownloadMenu = Boolean(downloadAnchorEl);
+  const handleOpenDownloadMenu = (e) => setDownloadAnchorEl(e.currentTarget);
+  const handleCloseDownloadMenu = () => setDownloadAnchorEl(null);
   // Prompt user if there are unsaved configuration changes
   const { isPromptDirty, isInitialDirty } = useSystemPrompt();
   const { isOverridesDirty } = useToolOverrides();
@@ -177,16 +189,38 @@ function AppWrapper() {
               >
                 MCP
               </Button>
-              <Tooltip title="Export current config as YAML">
-                <Button
-                  color="inherit"
-                  startIcon={<SaveIcon />}
-                  sx={{ textTransform: "none", fontWeight: 500 }}
-                  onClick={() => setExportOpen(true)}
+              {/* Download dropdown: Config & Tools */}
+              <Button
+                color="inherit"
+                startIcon={<DownloadIcon />}
+                endIcon={<ArrowDropDownIcon />}
+                sx={{ textTransform: "none", fontWeight: 500, ml: 1 }}
+                onClick={handleOpenDownloadMenu}
+              >
+                Download
+              </Button>
+              <Menu
+                anchorEl={downloadAnchorEl}
+                open={openDownloadMenu}
+                onClose={handleCloseDownloadMenu}
+              >
+                <MenuItem
+                  onClick={() => {
+                    setExportOpen(true);
+                    handleCloseDownloadMenu();
+                  }}
                 >
-                  Config
-                </Button>
-              </Tooltip>
+                  MCP Explorer config
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setToolsJsonOpen(true);
+                    handleCloseDownloadMenu();
+                  }}
+                >
+                  MCP tool definitions
+                </MenuItem>
+              </Menu>
             </Box>
           </Toolbar>
         </AppBar>
@@ -211,6 +245,10 @@ function AppWrapper() {
           </Routes>
         </Container>
       </Box>
+      <ToolsJsonDialog
+        open={toolsJsonOpen}
+        onClose={() => setToolsJsonOpen(false)}
+      />
       <ConfigExportDialog
         open={exportOpen}
         onClose={() => setExportOpen(false)}

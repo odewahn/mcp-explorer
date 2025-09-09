@@ -5,9 +5,12 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
+  Box,
 } from "@mui/material";
 import YAML from "js-yaml";
+import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/mode-yaml";
+import "ace-builds/src-noconflict/theme-github";
 import { useToolOverrides } from "./contexts/ToolOverrideContext";
 import { useSystemPrompt } from "./contexts/SystemPromptContext";
 import { useApiKeys } from "./contexts/ApiKeysContext";
@@ -19,6 +22,7 @@ import { useServers } from "./contexts/ServersContext";
  */
 export default function ConfigExportDialog({ open, onClose }) {
   const [yamlText, setYamlText] = useState("");
+  const [copied, setCopied] = useState(false);
   const { overrides, markOverridesClean } = useToolOverrides();
   const { systemPrompt, initialMessage, model, markPromptClean, markInitialClean } = useSystemPrompt();
   const { apiKeys, markApiKeysClean } = useApiKeys();
@@ -58,6 +62,9 @@ export default function ConfigExportDialog({ open, onClose }) {
     setYamlText(yaml);
   }, [open, servers, overrides, systemPrompt, apiKeys, envVars, initialMessage]);
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(yamlText).then(() => setCopied(true));
+  };
   const handleDownload = () => {
     const blob = new Blob([yamlText || ""], { type: "text/yaml" });
     const url = URL.createObjectURL(blob);
@@ -78,15 +85,22 @@ export default function ConfigExportDialog({ open, onClose }) {
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Export Configuration (YAML)</DialogTitle>
       <DialogContent>
-        <TextField
-          value={yamlText}
-          multiline
-          fullWidth
-          minRows={20}
-          variant="outlined"
-        />
+        <Box sx={{ height: '60vh', overflow: 'hidden' }}>
+          <AceEditor
+            mode="yaml"
+            theme="github"
+            value={yamlText}
+            name="config-yaml-editor"
+            width="100%"
+            height="100%"
+            readOnly
+            setOptions={{ useWorker: false }}
+            editorProps={{ $blockScrolling: true }}
+          />
+        </Box>
       </DialogContent>
       <DialogActions>
+        <Button onClick={handleCopy}> {copied ? 'Copied!' : 'Copy to Clipboard'} </Button>
         <Button onClick={handleDownload} variant="contained">
           Download YAML
         </Button>

@@ -20,6 +20,12 @@ def run():
     # Entrypoint for both HTTP server (default) and interactive REPL
     parser = argparse.ArgumentParser(prog="mcp-explorer")
     parser.add_argument(
+        "--version",
+        action="version",
+        version=f"{parser.prog} {settings.version}",
+        help="Print the MCP Explorer version and exit",
+    )
+    parser.add_argument(
         "--config",
         "-c",
         help=(
@@ -54,6 +60,13 @@ def run():
         default="serve",
         help="Mode to run: 'repl' for interactive client, 'serve' for HTTP server (default)",
     )
+    parser.add_argument(
+        "--max-tool-calls",
+        type=int,
+        help=(
+            "Override the maximum number of allowed tool calls in a single query"
+        ),
+    )
     args = parser.parse_args()
 
     # Set logging level: verbose→DEBUG otherwise show errors only
@@ -81,6 +94,10 @@ def run():
             raise SystemExit(1)
 
         os.environ["ANTHROPIC_API_KEY"] = decrypted
+
+    # Override max_tool_calls if provided
+    if args.max_tool_calls is not None:
+        settings.max_tool_calls = args.max_tool_calls
 
     # Decide mode: 'repl' for interactive client, 'serve' for HTTP server (default)
     if args.mode == "repl":
@@ -111,11 +128,16 @@ Please ensure 'anthropic' and other dependencies are installed.",
                 name = entry.get("name")
                 url = entry.get("url")
                 stype = entry.get("server_type", "stdio")
+                # Pull env-vars and api-keys from config entry
+                env_list = entry.get("environment_variables") or []
+                env_map = {e.get("key"): e.get("val") for e in env_list if isinstance(e, dict)}
                 try:
                     ok = await client.connect_to_server(
                         server_url=url,
                         server_type=stype,
                         server_name=name,
+                        api_keys=entry.get("api_keys"),
+                        environment_variables=env_map,
                     )
                     if not ok:
                         failed.append((name, "connect_to_server returned False"))
